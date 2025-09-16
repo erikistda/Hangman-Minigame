@@ -1,15 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Hangman: Vollversion
-Features:
-- tkinter GUI: Menü, Spiel, Einstellungen, Highscores
-- Kategorien
-- Klickbare Tastatur + Wort-Eingabe
-- Canvas Hangman Zeichnung
-- Sound via pygame.mixer (place WAV files in ./sounds/)
-- Highscores als JSON (scores.json)
-"""
-
 import tkinter as tk
 from tkinter import simpledialog, messagebox, filedialog
 import random
@@ -27,7 +15,7 @@ SCORES_FILE = os.path.join(os.path.dirname(__file__), "scores.json")
 CATEGORIES = {
     "Alltag": ["schule", "hausaufgaben", "freund", "fahrrad", "tasche", "handy"],
     "Spiele": ["minecraft", "godofwar", "fortnite", "zelda", "cyberpunk"],
-    "Tiere": ["elefant", "löwe".replace("ß", "ss"), "giraffe", "pinguin", "kaninchen"],
+    "Tiere": ["elefant", "löwe", "giraffe", "pinguin", "kaninchen"],
 }
 
 # Buchstaben (inkl. Umlaute)

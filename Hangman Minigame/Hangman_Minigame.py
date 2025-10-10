@@ -8,6 +8,17 @@ Features:
 - Canvas Hangman Zeichnung
 - Sound via pygame.mixer (place WAV files in ./sounds/)
 - Highscores als JSON (scores.json)
+
+
+ - If no sounds, no problem - game works without them
+ - But if you want sounds, place WAV files in a "sounds" folder next to this script:
+    - success.wav (correct guess)
+    - failed.wav (wrong guess)
+    - win.wav (game won)
+    - lost.wav (game lost)
+    - Scores saved in scores.json next to this script
+ - And if you have not pip installed pygame, do so via:
+   - py -m pip install pygame
 """
 
 import tkinter as tk
@@ -15,6 +26,10 @@ from tkinter import simpledialog, messagebox, filedialog
 import random
 import os
 import json
+import pygame
+
+
+
 
 # -----------------------
 # Konfiguration / Daten
@@ -22,6 +37,9 @@ import json
 APP_TITLE = "Hangman"
 SOUNDS_DIR = os.path.join(os.path.dirname(__file__), "sounds")
 SCORES_FILE = os.path.join(os.path.dirname(__file__), "scores.json")
+pygame.init()
+
+
 
 # Kategorien mit Beispielwörtern (erweiterbar)
 CATEGORIES = {
@@ -49,10 +67,10 @@ def load_sound(name):
             return None
     return None
 
-SOUND_CORRECT = load_sound("correct.wav")
-SOUND_WRONG = load_sound("wrong.wav")
+SOUND_CORRECT = load_sound("success.wav")
+SOUND_WRONG = load_sound("failed.wav")
 SOUND_WIN = load_sound("win.wav")
-SOUND_LOSE = load_sound("lose.wav")
+SOUND_LOSE = load_sound("lost.wav")
 
 def play_sound(sound, volume=0.6):
     if not sound:
@@ -413,6 +431,7 @@ class HangmanApp:
 def main():
     root = tk.Tk()
     app = HangmanApp(root)
+    pygame.mixer.init()
 
     # ESC schliesst, falls Vollbild aktiv (freundlich)
     def on_escape(event=None):
@@ -429,3 +448,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    

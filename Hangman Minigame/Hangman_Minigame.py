@@ -5,8 +5,7 @@ import string
 def on_escape(event=None):
     root.destroy()
 root = tk.Tk()
-root.ti
-tle("Hangman Minigame")
+root.title("Hangman Minigame")
 root.attributes("-fullscreen",True)
 root.configure(bg="#869fb3")
 root.bind_all("<Escape>",on_escape)

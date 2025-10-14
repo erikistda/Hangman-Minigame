@@ -112,6 +112,89 @@ btn_beenden.pack(pady=10)
 # PLAY-Screen
 import random
 
+# --- Aufbau des Screens ---
+screen_game.configure(bg="#AAC1D2")
+tk.Button(screen_game, text="← BACK", font=("Arial", 14), # Zurück-Button
+          command=go_back).place(x=20, y=20)
+word_label = tk.Label(screen_game, text="", font=("Courier", 28), bg="#AAC1D2") # Wortanzeige 
+word_label.pack(pady=10)
+hearts_label = tk.Label(screen_game, text="", font=("Arial", 20), bg="#AAC1D2") # Herzen
+hearts_label.pack()
+def update_hearts():
+    hearts_label.config(text="❤️ " * leben)
+
+# Zeichenfläche für Hangman 
+canvas = tk.Canvas(screen_game, width=400, height=300, bg="#AAC1D2", highlightthickness=0)
+canvas.pack(pady=20)
+
+def draw_gallows():
+    canvas.delete("all")
+    # Gerüst
+    canvas.create_line(100, 250, 300, 250, width=4)
+    canvas.create_line(150, 250, 150, 50, width=4)
+    canvas.create_line(150, 50, 250, 50, width=4)
+    canvas.create_line(250, 50, 250, 80, width=3)  # Seil
+
+def draw_hangman_stage():
+    parts = [
+        lambda: canvas.create_oval(235, 80, 265, 110, width=3),  # Kopf
+        lambda: canvas.create_line(250, 110, 250, 160, width=3), # Körper
+        lambda: canvas.create_line(250, 120, 230, 140, width=3), # linker Arm
+        lambda: canvas.create_line(250, 120, 270, 140, width=3), # rechter Arm
+        lambda: canvas.create_line(250, 160, 230, 190, width=3), # linkes Bein
+        lambda: canvas.create_line(250, 160, 270, 190, width=3)  # rechtes Bein
+    ]
+    index = 6 - leben - 1
+    if 0 <= index < len(parts):
+        parts[index]()
+
+def update_word_display():
+    display = " ".join([c if c in erratene_buchstaben else "_" for c in geheime_wort])
+    word_label.config(text=display)
+
+# Tastatur 
+keyboard_frame = tk.Frame(screen_game, bg="#AAC1D2")
+keyboard_frame.pack(side="bottom", pady=50)
+
+keys = {}
+letters = list("QWERTZUIOPÜASDFGHJKLÖÄYXCVBNM")
+layout = ["QWERTZUIOPÜ", "ASDFGHJKLÖÄ", "YXCVBNM"]
+
+for row in layout:
+    row_frame = tk.Frame(keyboard_frame, bg="#AAC1D2")
+    row_frame.pack()
+    for char in row:
+        lbl = tk.Label(row_frame, text=char, font=("Arial", 20), width=4, height=2,
+                       bg="white", relief="raised", borderwidth=2)
+        lbl.pack(side="left", padx=3, pady=3)
+        keys[char] = lbl
+
+def check_letter(key):
+    global leben
+    if not geheime_wort or leben <= 0:
+        return
+    if key in erratene_buchstaben:
+        return
+    erratene_buchstaben.add(key)
+
+    if key in geheime_wort:
+        keys[key].config(bg="#9fff9f")  # richtig = grünlich
+    else:
+        keys[key].config(bg="#ff9f9f")  # falsch = rot
+        leben -= 1
+        draw_hangman_stage()
+        update_hearts()
+
+    update_word_display()
+
+    # gewonnen oder verloren
+    if leben == 0:
+        word_label.config(text=f"Verloren! Das Wort war {geheime_wort}")
+    elif all(c in erratene_buchstaben for c in geheime_wort):
+        word_label.config(text="🎉 Gewonnen!")
+
+
+
 # Themen mit Wörtern
 themen_woerter = {
     "Länder": ["SCHWEIZ", "ITALIEN", "FRANKREICH", "DEUTSCHLAND"],
@@ -129,8 +212,6 @@ erratene_buchstaben = set()
 leben = 6
 hangman_parts = []
 
-# --- Aufbau des Screens ---
-screen_game.configure(bg="#AAC1D2")
 
 # Frame für Auswahl
 auswahl_frame = tk.Frame(screen_game, bg="#AAC1D2")
@@ -179,86 +260,6 @@ def start_game(event=None):
     draw_gallows()
     update_hearts()
 
-# --- Zeichenfläche für Hangman ---
-canvas = tk.Canvas(screen_game, width=400, height=300, bg="#AAC1D2", highlightthickness=0)
-canvas.pack(pady=20)
-
-def draw_gallows():
-    canvas.delete("all")
-    # Gerüst
-    canvas.create_line(100, 250, 300, 250, width=4)
-    canvas.create_line(150, 250, 150, 50, width=4)
-    canvas.create_line(150, 50, 250, 50, width=4)
-    canvas.create_line(250, 50, 250, 80, width=3)  # Seil
-
-def draw_hangman_stage():
-    parts = [
-        lambda: canvas.create_oval(235, 80, 265, 110, width=3),  # Kopf
-        lambda: canvas.create_line(250, 110, 250, 160, width=3), # Körper
-        lambda: canvas.create_line(250, 120, 230, 140, width=3), # linker Arm
-        lambda: canvas.create_line(250, 120, 270, 140, width=3), # rechter Arm
-        lambda: canvas.create_line(250, 160, 230, 190, width=3), # linkes Bein
-        lambda: canvas.create_line(250, 160, 270, 190, width=3)  # rechtes Bein
-    ]
-    index = 6 - leben - 1
-    if 0 <= index < len(parts):
-        parts[index]()
-
-# --- Wortanzeige ---
-word_label = tk.Label(screen_game, text="", font=("Courier", 28), bg="#AAC1D2")
-word_label.pack(pady=10)
-
-def update_word_display():
-    display = " ".join([c if c in erratene_buchstaben else "_" for c in geheime_wort])
-    word_label.config(text=display)
-
-# --- Herzen ---
-hearts_label = tk.Label(screen_game, text="", font=("Arial", 20), bg="#AAC1D2")
-hearts_label.pack()
-
-def update_hearts():
-    hearts_label.config(text="❤️ " * leben)
-
-# --- Tastatur ---
-keyboard_frame = tk.Frame(screen_game, bg="#AAC1D2")
-keyboard_frame.pack(side="bottom", pady=50)
-
-keys = {}
-letters = list("QWERTZUIOPÜASDFGHJKLÖÄYXCVBNM")
-layout = ["QWERTZUIOPÜ", "ASDFGHJKLÖÄ", "YXCVBNM"]
-
-for row in layout:
-    row_frame = tk.Frame(keyboard_frame, bg="#AAC1D2")
-    row_frame.pack()
-    for char in row:
-        lbl = tk.Label(row_frame, text=char, font=("Arial", 20), width=4, height=2,
-                       bg="white", relief="raised", borderwidth=2)
-        lbl.pack(side="left", padx=3, pady=3)
-        keys[char] = lbl
-
-def check_letter(key):
-    global leben
-    if not geheime_wort or leben <= 0:
-        return
-    if key in erratene_buchstaben:
-        return
-    erratene_buchstaben.add(key)
-
-    if key in geheime_wort:
-        keys[key].config(bg="#9fff9f")  # richtig = grünlich
-    else:
-        keys[key].config(bg="#ff9f9f")  # falsch = rot
-        leben -= 1
-        draw_hangman_stage()
-        update_hearts()
-
-    update_word_display()
-
-    # gewonnen oder verloren
-    if leben == 0:
-        word_label.config(text=f"Verloren! Das Wort war {geheime_wort}")
-    elif all(c in erratene_buchstaben for c in geheime_wort):
-        word_label.config(text="🎉 Gewonnen!")
 
 # --- Tastatursteuerung ---
 umlaut_map = {"adiaeresis": "Ä", "odiaeresis": "Ö", "udiaeresis": "Ü"}
@@ -281,11 +282,6 @@ auswahl_label.bind("<Button-1>", start_game)
 root.bind("<Left>", prev_kategorie)
 root.bind("<Right>", next_kategorie)
 root.bind("<Return>", start_game)
-
-# Zurück-Button
-tk.Button(screen_game, text="← BACK", font=("Arial", 14),
-          command=go_back).place(x=20, y=20)
-
 
 
 

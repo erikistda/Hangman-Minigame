@@ -1,5 +1,8 @@
+from importlib import reload
 import tkinter as tk
 import string
+from tkinter import font
+from turtle import back
 
 # Window setup
 def on_escape(event=None):
@@ -21,8 +24,19 @@ screen_highscores = tk.Frame(root,bg="#EAE5E3")
 for frame in (screen_menu,screen_game,screen_settings,screen_highscores):
     frame.place(relwidth=1,relheight=1)
 
-#Zurück Funkrion
+# Settings
+font_sizes_standard = [14,20,24,28,40,60]
+font_sizes_big = [18, 26, 31, 36, 52, 78]
+font_sizes_small = [11, 16, 19, 22, 32, 48]
+font_size1 = font_sizes_standard[0]
+font_size2 = font_sizes_standard[1]
+font_size3 = font_sizes_standard[2]
+font_size4 = font_sizes_standard[3]
+font_size5 = font_sizes_standard[4]
+font_size6 = font_sizes_standard[5]
+current_font_size = "standard"
 
+#Zurück Funkrion
 def go_back():
     screen_menu.tkraise()
 
@@ -35,7 +49,7 @@ canvas.pack(pady=50)
 canvas.create_text(
     400, 100,
     text="HÄNGE",
-    font=("Arial", 60, "bold underline"),
+    font=("Arial", font_size6, "bold underline"),
     fill="white"
 )
 
@@ -93,19 +107,19 @@ canvas.create_line(
 )
 
 
-btn_spielen=tk.Button(screen_menu,text="PLAY",font=("Arial",20),width=15,
+btn_spielen=tk.Button(screen_menu,text="PLAY",font=("Arial",font_size2),width=15,
                       command=lambda:screen_game.tkraise())
 btn_spielen.pack(pady=10)
 
-btn_einstellungen=tk.Button(screen_menu,text="SETTINGS",font=("Arial",20),width=15,
+btn_einstellungen=tk.Button(screen_menu,text="SETTINGS",font=("Arial",font_size2),width=15,
                       command=lambda:screen_settings.tkraise())
 btn_einstellungen.pack(pady=10)
 
-btn_highscores=tk.Button(screen_menu,text="HIGHSCORES",font=("Arial",20),width=15,
+btn_highscores=tk.Button(screen_menu,text="HIGHSCORES",font=("Arial",font_size2),width=15,
                       command=lambda:screen_highscores.tkraise())
 btn_highscores.pack(pady=10)
 
-btn_beenden=tk.Button(screen_menu,text="EXIT",font=("Arial",20),width=15,
+btn_beenden=tk.Button(screen_menu,text="EXIT",font=("Arial",font_size2),width=15,
                       command=root.destroy)
 btn_beenden.pack(pady=10)
 
@@ -114,15 +128,6 @@ import random
 
 # --- Aufbau des Screens ---
 screen_game.configure(bg="#AAC1D2")
-tk.Button(screen_game, text="← BACK", font=("Arial", 14), # Zurück-Button
-          command=go_back).place(x=20, y=20)
-word_label = tk.Label(screen_game, text="", font=("Courier", 28), bg="#AAC1D2") # Wortanzeige 
-word_label.pack(pady=10)
-hearts_label = tk.Label(screen_game, text="", font=("Arial", 20), bg="#AAC1D2") # Herzen
-hearts_label.pack()
-def update_hearts():
-    hearts_label.config(text="❤️ " * leben)
-
 # Zeichenfläche für Hangman 
 canvas = tk.Canvas(screen_game, width=400, height=300, bg="#AAC1D2", highlightthickness=0)
 canvas.pack(pady=20)
@@ -152,6 +157,17 @@ def update_word_display():
     display = " ".join([c if c in erratene_buchstaben else "_" for c in geheime_wort])
     word_label.config(text=display)
 
+
+game_back_button = tk.Button(screen_game, text="← BACK", font=("Arial", font_size1), command=go_back)
+game_back_button.place(x=20, y=20)
+word_label = tk.Label(screen_game, text="", font=("Courier", font_size4), bg="#AAC1D2") # Wortanzeige 
+word_label.pack(pady=10)
+hearts_label = tk.Label(screen_game, text="", font=("Arial", font_size2), bg="#AAC1D2") # Herzen
+hearts_label.pack()
+def update_hearts():
+    hearts_label.config(text="❤️ " * leben)
+
+
 # Tastatur 
 keyboard_frame = tk.Frame(screen_game, bg="#AAC1D2")
 keyboard_frame.pack(side="bottom", pady=50)
@@ -164,7 +180,7 @@ for row in layout:
     row_frame = tk.Frame(keyboard_frame, bg="#AAC1D2")
     row_frame.pack()
     for char in row:
-        lbl = tk.Label(row_frame, text=char, font=("Arial", 20), width=4, height=2,
+        lbl = tk.Label(row_frame, text=char, font=("Arial", font_size2), width=4, height=2,
                        bg="white", relief="raised", borderwidth=2)
         lbl.pack(side="left", padx=3, pady=3)
         keys[char] = lbl
@@ -284,20 +300,90 @@ root.bind("<Right>", next_kategorie)
 root.bind("<Return>", start_game)
 
 
-
-
 # SETTINGS-Screen
-tk.Label(screen_settings, text="Einstellungen", font=("Arial", 24), bg="#EAE5E3").pack(pady=200)
-tk.Button(screen_settings, text="← BACK", font=("Arial", 14),
-          command=go_back).place(x=20, y=20)
+def change_text_size():
+    global font_size1, font_size2, font_size3, font_size4, font_size5, font_size6, font_sizes_small, font_sizes_standard, font_sizes_big, current_font_size
+    if current_font_size == "standard":
+        font_size1 = font_sizes_big[0]
+        font_size2 = font_sizes_big[1]
+        font_size3 = font_sizes_big[2]
+        font_size4 = font_sizes_big[3]
+        font_size5 = font_sizes_big[4]
+        font_size6 = font_sizes_big[5]
+        current_font_size = "big"
+    elif current_font_size == "big":
+        font_size1 = font_sizes_small[0]
+        font_size2 = font_sizes_small[1]
+        font_size3 = font_sizes_small[2]
+        font_size4 = font_sizes_small[3]
+        font_size5 = font_sizes_small[4]
+        font_size6 = font_sizes_small[5]
+        current_font_size = "small"
+    elif current_font_size == "small":
+        font_size1 = font_sizes_standard[0]
+        font_size2 = font_sizes_standard[1]
+        font_size3 = font_sizes_standard[2]
+        font_size4 = font_sizes_standard[3]
+        font_size5 = font_sizes_standard[4]
+        font_size6 = font_sizes_standard[5]
+        current_font_size = "standard"
+
+
+    # Settings - Settings Screen
+    settings_label.config(font=("Arial", font_size3))
+    settings_back_button.config(font=("Arial", font_size1))
+    size_button.config(text=current_font_size, font=("Arial", font_size3))
+    size_button_identifier.config(font=("Arial", font_size2))
+    
+    #Settings - Highscore Screen
+    highscore_label.config(font=("Arial", font_size3))
+    highscore_back_button.config(font=("Arial", font_size1))
+
+    # Settings - Game Screen
+    game_back_button.config(font=("Arial", font_size1))
+    word_label.config(font=("Courier", font_size4))
+    hearts_label.config(font=("Arial", font_size2))
+    
+    # Settings - Menu Screen
+    btn_spielen.config(font=("Arial", font_size2))
+    btn_einstellungen.config(font=("Arial", font_size2))
+    btn_highscores.config(font=("Arial", font_size2))
+    btn_beenden.config(font=("Arial", font_size2))
+
+    # Settings - Game Screen Auswahl Frame
+    btn_links.config(font=("Arial", font_size5))
+    auswahl_label.config(font=("Arial", font_size3, "bold"))
+    btn_rechts.config(font=("Arial", font_size5))
+    
+    # Settings - Game Screen Keyboard (als Schleife)
+    for key_label in keys.values():
+        key_label.config(font=("Arial", font_size2))
+
+
+# Container Frame erstellen, um das Label und den Button nebeneinander zu halten
+size_control_frame = tk.Frame(screen_settings, bg="#EAE5E3")
+# Den Container in der Mitte des Screens platzieren
+size_control_frame.pack(pady=10) 
+
+settings_label = tk.Label(screen_settings, text="Einstellungen", font=("Arial", font_size3), bg="#EAE5E3")
+settings_label.pack(pady=200)
+settings_back_button = tk.Button(screen_settings, text="← BACK", font=("Arial", font_size1), command=go_back)
+settings_back_button.place(x=20, y=20)
+size_button = tk.Button(screen_settings, text=current_font_size, font=("Arial", font_size3), command=change_text_size)
+size_button.pack(pady=00)
+size_button_identifier = tk.Label(screen_settings, text="Text size", font=("Arial", font_size2), bg="#EAE5E3")
+size_button_identifier.pack(pady=10)
 root.bind("<BackSpace>", lambda event: go_back())
 
 
 
+
+
 # Highscore-Screen
-tk.Label(screen_highscores, text="Highscores", font=("Arial", 24), bg="#EAE5E3").pack(pady=200)
-tk.Button(screen_highscores, text="← BACK", font=("Arial", 14),
-          command=go_back).place(x=20, y=20)
+highscore_label = tk.Label(screen_highscores, text="Highscores", font=("Arial", font_size3), bg="#EAE5E3")
+highscore_label.pack(pady=200)
+highscore_back_button = tk.Button(screen_highscores, text="← BACK", font=("Arial", font_size1), command=go_back)
+highscore_back_button.place(x=20, y=20)
 root.bind("<BackSpace>", lambda event: go_back())
 
 

@@ -114,19 +114,6 @@ import random
 
 # --- Aufbau des Screens ---
 screen_game.configure(bg="#AAC1D2")
-tk.Button(screen_game, text="← BACK", font=("Arial", 14), # Zurück-Button
-          command=go_back).place(x=20, y=20)
-word_label = tk.Label(screen_game, text="", font=("Courier", 28), bg="#AAC1D2") # Wortanzeige 
-word_label.pack(pady=10)
-hearts_label = tk.Label(screen_game, text="", font=("Arial", 20), bg="#AAC1D2") # Herzen
-hearts_label.pack()
-def update_hearts():
-    hearts_label.config(text="❤️ " * leben)
-
-# Zeichenfläche für Hangman 
-canvas = tk.Canvas(screen_game, width=400, height=300, bg="#AAC1D2", highlightthickness=0)
-canvas.pack(pady=20)
-
 def draw_gallows():
     canvas.delete("all")
     # Gerüst
@@ -151,6 +138,21 @@ def draw_hangman_stage():
 def update_word_display():
     display = " ".join([c if c in erratene_buchstaben else "_" for c in geheime_wort])
     word_label.config(text=display)
+
+
+tk.Button(screen_game, text="← BACK", font=("Arial", 14), # Zurück-Button
+          command=go_back).place(x=20, y=20)
+word_label = tk.Label(screen_game, text="", font=("Courier", 28), bg="#AAC1D2") # Wortanzeige 
+word_label.pack(pady=10)
+hearts_label = tk.Label(screen_game, text="", font=("Arial", 20), bg="#AAC1D2") # Herzen
+hearts_label.pack()
+def update_hearts():
+    hearts_label.config(text="❤️ " * leben)
+
+# Zeichenfläche für Hangman 
+canvas = tk.Canvas(screen_game, width=400, height=300, bg="#AAC1D2", highlightthickness=0)
+canvas.pack(pady=20)
+
 
 # Tastatur 
 keyboard_frame = tk.Frame(screen_game, bg="#AAC1D2")

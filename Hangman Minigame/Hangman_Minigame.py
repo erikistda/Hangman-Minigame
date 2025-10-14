@@ -21,8 +21,16 @@ screen_highscores = tk.Frame(root,bg="#EAE5E3")
 for frame in (screen_menu,screen_game,screen_settings,screen_highscores):
     frame.place(relwidth=1,relheight=1)
 
-#Zurück Funkrion
+# Settings
+font_sizes_standard = [14,20,24,28,40,60]
+font_size1 = font_sizes_standard[0]
+font_size2 = font_sizes_standard[1]
+font_size3 = font_sizes_standard[2]
+font_size4 = font_sizes_standard[3]
+font_size5 = font_sizes_standard[4]
+font_size6 = font_sizes_standard[5]
 
+#Zurück Funkrion
 def go_back():
     screen_menu.tkraise()
 
@@ -93,19 +101,19 @@ canvas.create_line(
 )
 
 
-btn_spielen=tk.Button(screen_menu,text="PLAY",font=("Arial",20),width=15,
+btn_spielen=tk.Button(screen_menu,text="PLAY",font=("Arial",font_size2),width=15,
                       command=lambda:screen_game.tkraise())
 btn_spielen.pack(pady=10)
 
-btn_einstellungen=tk.Button(screen_menu,text="SETTINGS",font=("Arial",20),width=15,
+btn_einstellungen=tk.Button(screen_menu,text="SETTINGS",font=("Arial",font_size2),width=15,
                       command=lambda:screen_settings.tkraise())
 btn_einstellungen.pack(pady=10)
 
-btn_highscores=tk.Button(screen_menu,text="HIGHSCORES",font=("Arial",20),width=15,
+btn_highscores=tk.Button(screen_menu,text="HIGHSCORES",font=("Arial",font_size2),width=15,
                       command=lambda:screen_highscores.tkraise())
 btn_highscores.pack(pady=10)
 
-btn_beenden=tk.Button(screen_menu,text="EXIT",font=("Arial",20),width=15,
+btn_beenden=tk.Button(screen_menu,text="EXIT",font=("Arial",font_size2),width=15,
                       command=root.destroy)
 btn_beenden.pack(pady=10)
 
@@ -114,6 +122,10 @@ import random
 
 # --- Aufbau des Screens ---
 screen_game.configure(bg="#AAC1D2")
+# Zeichenfläche für Hangman 
+canvas = tk.Canvas(screen_game, width=400, height=300, bg="#AAC1D2", highlightthickness=0)
+canvas.pack(pady=20)
+
 def draw_gallows():
     canvas.delete("all")
     # Gerüst
@@ -140,18 +152,14 @@ def update_word_display():
     word_label.config(text=display)
 
 
-tk.Button(screen_game, text="← BACK", font=("Arial", 14), # Zurück-Button
+tk.Button(screen_game, text="← BACK", font=("Arial", font_size1), # Zurück-Button
           command=go_back).place(x=20, y=20)
-word_label = tk.Label(screen_game, text="", font=("Courier", 28), bg="#AAC1D2") # Wortanzeige 
+word_label = tk.Label(screen_game, text="", font=("Courier", font_size4), bg="#AAC1D2") # Wortanzeige 
 word_label.pack(pady=10)
-hearts_label = tk.Label(screen_game, text="", font=("Arial", 20), bg="#AAC1D2") # Herzen
+hearts_label = tk.Label(screen_game, text="", font=("Arial", font_size2), bg="#AAC1D2") # Herzen
 hearts_label.pack()
 def update_hearts():
     hearts_label.config(text="❤️ " * leben)
-
-# Zeichenfläche für Hangman 
-canvas = tk.Canvas(screen_game, width=400, height=300, bg="#AAC1D2", highlightthickness=0)
-canvas.pack(pady=20)
 
 
 # Tastatur 
@@ -166,7 +174,7 @@ for row in layout:
     row_frame = tk.Frame(keyboard_frame, bg="#AAC1D2")
     row_frame.pack()
     for char in row:
-        lbl = tk.Label(row_frame, text=char, font=("Arial", 20), width=4, height=2,
+        lbl = tk.Label(row_frame, text=char, font=("Arial", font_size2), width=4, height=2,
                        bg="white", relief="raised", borderwidth=2)
         lbl.pack(side="left", padx=3, pady=3)
         keys[char] = lbl
@@ -223,7 +231,7 @@ auswahl_frame.place(relx=0.5, rely=0.55, anchor="center")
 
 kategorien = list(themen_woerter.keys())
 
-btn_links = tk.Label(auswahl_frame, text="◀", font=("Arial", 40), bg="#AAC1D2", cursor="hand2")
+btn_links = tk.Label(auswahl_frame, text="◀", font=("Arial", font_size5), bg="#AAC1D2", cursor="hand2")
 btn_links.grid(row=0, column=0, padx=40)
 
 auswahl_label = tk.Label(auswahl_frame, text=kategorien[kategorie_index],
@@ -231,7 +239,7 @@ auswahl_label = tk.Label(auswahl_frame, text=kategorien[kategorie_index],
                          bg="white", relief="raised", borderwidth=3, cursor="hand2")
 auswahl_label.grid(row=0, column=1)
 
-btn_rechts = tk.Label(auswahl_frame, text="▶", font=("Arial", 40), bg="#AAC1D2", cursor="hand2")
+btn_rechts = tk.Label(auswahl_frame, text="▶", font=("Arial", font_size5), bg="#AAC1D2", cursor="hand2")
 btn_rechts.grid(row=0, column=2, padx=40)
 
 # --- Funktionen ---
@@ -289,16 +297,20 @@ root.bind("<Return>", start_game)
 
 
 # SETTINGS-Screen
-tk.Label(screen_settings, text="Einstellungen", font=("Arial", 24), bg="#EAE5E3").pack(pady=200)
-tk.Button(screen_settings, text="← BACK", font=("Arial", 14),
+def change_text_size():
+    global text_size
+tk.Label(screen_settings, text="Einstellungen", font=("Arial", font_size3), bg="#EAE5E3").pack(pady=200)
+tk.Button(screen_settings, text="← BACK", font=("Arial", font_size1),
           command=go_back).place(x=20, y=20)
 root.bind("<BackSpace>", lambda event: go_back())
+tk.Button(screen_settings, text="Text Size", font=("Arial", font_size3))
+
 
 
 
 # Highscore-Screen
-tk.Label(screen_highscores, text="Highscores", font=("Arial", 24), bg="#EAE5E3").pack(pady=200)
-tk.Button(screen_highscores, text="← BACK", font=("Arial", 14),
+tk.Label(screen_highscores, text="Highscores", font=("Arial", font_size3), bg="#EAE5E3").pack(pady=200)
+tk.Button(screen_highscores, text="← BACK", font=("Arial", font_size1),
           command=go_back).place(x=20, y=20)
 root.bind("<BackSpace>", lambda event: go_back())
 

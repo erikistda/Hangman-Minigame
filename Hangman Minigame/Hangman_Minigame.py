@@ -237,7 +237,7 @@ auswahl_frame.place(relx=0.5, rely=0.55, anchor="center")
 
 kategorien = list(themen_woerter.keys())
 
-btn_links = tk.Label(auswahl_frame, text="◀", font=("Arial", 40), bg="#AAC1D2", cursor="hand2")
+btn_links = tk.Label(auswahl_frame, text="◀", font=("Arial", font_size5), bg="#AAC1D2", cursor="hand2")
 btn_links.grid(row=0, column=0, padx=40)
 
 auswahl_label = tk.Label(auswahl_frame, text=kategorien[kategorie_index],
@@ -245,7 +245,7 @@ auswahl_label = tk.Label(auswahl_frame, text=kategorien[kategorie_index],
                          bg="white", relief="raised", borderwidth=3, cursor="hand2")
 auswahl_label.grid(row=0, column=1)
 
-btn_rechts = tk.Label(auswahl_frame, text="▶", font=("Arial", 40), bg="#AAC1D2", cursor="hand2")
+btn_rechts = tk.Label(auswahl_frame, text="▶", font=("Arial", font_size5), bg="#AAC1D2", cursor="hand2")
 btn_rechts.grid(row=0, column=2, padx=40)
 
 # --- Funktionen ---
@@ -374,6 +374,8 @@ size_button.pack(pady=00)
 size_button_identifier = tk.Label(screen_settings, text="Text size", font=("Arial", font_size2), bg="#EAE5E3")
 size_button_identifier.pack(pady=10)
 root.bind("<BackSpace>", lambda event: go_back())
+tk.Button(screen_settings, text="Text Size", font=("Arial", font_size3))
+
 
 
 

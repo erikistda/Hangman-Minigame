@@ -11,6 +11,26 @@ import threading
 SOUNDS_DIR = os.path.join(os.path.dirname(__file__), "Sounds")
 
 pygame.mixer.init()
+# Settings
+font_sizes_standard = [14,20,24,28,40,60]
+font_sizes_big = [18, 26, 31, 36, 52, 78]
+font_sizes_small = [11, 16, 19, 22, 32, 48]
+font_size1 = font_sizes_standard[0]
+font_size2 = font_sizes_standard[1]
+font_size3 = font_sizes_standard[2]
+font_size4 = font_sizes_standard[3]
+font_size5 = font_sizes_standard[4]
+font_size6 = font_sizes_standard[5]
+current_font_size = "Standard"
+
+standard_background_clours = ["#869fb3", "#AAC1D2", "#EAE5E3"]
+secondary_background_colours = ["#CCFFCC", "#FC8EAC", "#FF7518"]
+tertiarty_backgroud_colours = ["#FFA896", "#FFED29", "#B163FF"]
+menu_colour = standard_background_clours[0]
+game_colour = standard_background_clours[1]
+screen_colour = standard_background_clours[2]
+
+game_row_frames = []
 
 # Window setup
 def on_escape(event=None):
@@ -24,25 +44,13 @@ root.resizable(False,False)
 
 #Screens
 
-screen_menu = tk.Frame(root,bg="#869fb3")
-screen_game = tk.Frame(root,bg="#AAC1D2")
-screen_settings = tk.Frame(root,bg="#EAE5E3")
-screen_highscores = tk.Frame(root,bg="#EAE5E3")
+screen_menu = tk.Frame(root,bg=menu_colour)
+screen_game = tk.Frame(root,bg=game_colour)
+screen_settings = tk.Frame(root,bg=screen_colour)
+screen_highscores = tk.Frame(root,bg=screen_colour)
 
 for frame in (screen_menu,screen_game,screen_settings,screen_highscores):
     frame.place(relwidth=1,relheight=1)
-
-# Settings
-font_sizes_standard = [14,20,24,28,40,60]
-font_sizes_big = [18, 26, 31, 36, 52, 78]
-font_sizes_small = [11, 16, 19, 22, 32, 48]
-font_size1 = font_sizes_standard[0]
-font_size2 = font_sizes_standard[1]
-font_size3 = font_sizes_standard[2]
-font_size4 = font_sizes_standard[3]
-font_size5 = font_sizes_standard[4]
-font_size6 = font_sizes_standard[5]
-current_font_size = "standard"
 
 #Zurück Funkrion
 def go_back():
@@ -50,11 +58,11 @@ def go_back():
 
 #Menu
 # Hangman-Logo im Menü
-canvas = tk.Canvas(screen_menu, width=800, height=300, bg="#869fb3", highlightthickness=0)
-canvas.pack(pady=50)
+menu_canvas = tk.Canvas(screen_menu, width=800, height=300, bg=menu_colour, highlightthickness=0)
+menu_canvas.pack(pady=50)
 
 # HÄNGE-Text (fett und unterstrichen)
-canvas.create_text(
+menu_canvas.create_text(
     400, 100,
     text="HÄNGE",
     font=("Arial", font_size6, "bold underline"),
@@ -67,11 +75,11 @@ y_underline = 100 + 40  # etwas unterhalb der Buchstaben
 
 # Seil (weiss)
 y_seil_end = 175
-canvas.create_line(x_n, y_underline, x_n, y_seil_end, fill="white", width=2)
+menu_canvas.create_line(x_n, y_underline, x_n, y_seil_end, fill="white", width=2)
 
 # Kopf (leicht geneigt, etwas nach rechts)
 kopf_radius = 15
-canvas.create_oval(
+menu_canvas.create_oval(
     x_n - kopf_radius + 7,
     y_seil_end + 2,
     x_n + kopf_radius + 3,
@@ -81,7 +89,7 @@ canvas.create_oval(
 
 # Körper
 körper_länge = 40
-canvas.create_line(
+menu_canvas.create_line(
     x_n + 3,
     y_seil_end + 2*kopf_radius + 2,
     x_n + 3,
@@ -91,29 +99,28 @@ canvas.create_line(
 )
 
 # Arme
-canvas.create_line(
+menu_canvas.create_line(
     x_n + 3, y_seil_end + 2*kopf_radius + 10,
     x_n - 10, y_seil_end + 2*kopf_radius + 25,
     fill="black", width=2
 )
-canvas.create_line(
+menu_canvas.create_line(
     x_n + 3, y_seil_end + 2*kopf_radius + 10,
     x_n + 16, y_seil_end + 2*kopf_radius + 25,
     fill="black", width=2
 )
 
 # Beine
-canvas.create_line(
+menu_canvas.create_line(
     x_n + 3, y_seil_end + 2*kopf_radius + körper_länge,
     x_n - 10, y_seil_end + 2*kopf_radius + körper_länge + 30,
     fill="black", width=2
 )
-canvas.create_line(
+menu_canvas.create_line(
     x_n + 3, y_seil_end + 2*kopf_radius + körper_länge,
     x_n + 15, y_seil_end + 2*kopf_radius + körper_länge + 30,
     fill="black", width=2
 )
-
 
 btn_spielen=tk.Button(screen_menu,text="PLAY",font=("Arial",font_size2),width=15,
                       command=lambda:screen_game.tkraise())
@@ -187,6 +194,7 @@ layout = ["QWERTZUIOPÜ", "ASDFGHJKLÖÄ", "YXCVBNM"]
 for row in layout:
     row_frame = tk.Frame(keyboard_frame, bg="#AAC1D2")
     row_frame.pack()
+    game_row_frames.append(row_frame)
     for char in row:
         lbl = tk.Label(row_frame, text=char, font=("Arial", font_size2), width=4, height=2,
                        bg="white", relief="raised", borderwidth=2)
@@ -314,33 +322,39 @@ root.bind("<Right>", next_kategorie)
 root.bind("<Return>", start_game)
 
 
-# SETTINGS-Screen
+# --SETTINGS-Screen--
+settings_label = tk.Label(screen_settings, text="Einstellungen", font=("Arial", font_size3), bg=screen_colour)
+settings_label.pack(pady=50)
+settings_back_button = tk.Button(screen_settings, text="← BACK", font=("Arial", font_size1), command=go_back)
+settings_back_button.place(x=20, y=20)
+
+# Size Controll
 def change_text_size():
     global font_size1, font_size2, font_size3, font_size4, font_size5, font_size6, font_sizes_small, font_sizes_standard, font_sizes_big, current_font_size
-    if current_font_size == "standard":
+    if current_font_size == "Standard":
         font_size1 = font_sizes_big[0]
         font_size2 = font_sizes_big[1]
         font_size3 = font_sizes_big[2]
         font_size4 = font_sizes_big[3]
         font_size5 = font_sizes_big[4]
         font_size6 = font_sizes_big[5]
-        current_font_size = "big"
-    elif current_font_size == "big":
+        current_font_size = "Big"
+    elif current_font_size == "Big":
         font_size1 = font_sizes_small[0]
         font_size2 = font_sizes_small[1]
         font_size3 = font_sizes_small[2]
         font_size4 = font_sizes_small[3]
         font_size5 = font_sizes_small[4]
         font_size6 = font_sizes_small[5]
-        current_font_size = "small"
-    elif current_font_size == "small":
+        current_font_size = "Small"
+    elif current_font_size == "Small":
         font_size1 = font_sizes_standard[0]
         font_size2 = font_sizes_standard[1]
         font_size3 = font_sizes_standard[2]
         font_size4 = font_sizes_standard[3]
         font_size5 = font_sizes_standard[4]
         font_size6 = font_sizes_standard[5]
-        current_font_size = "standard"
+        current_font_size = "Standard"
 
 
     # Settings - Settings Screen
@@ -374,22 +388,143 @@ def change_text_size():
         key_label.config(font=("Arial", font_size2))
 
 
-# Container Frame erstellen, um das Label und den Button nebeneinander zu halten
-size_control_frame = tk.Frame(screen_settings, bg="#EAE5E3")
-# Den Container in der Mitte des Screens platzieren
-size_control_frame.pack(pady=10) 
 
-settings_label = tk.Label(screen_settings, text="Einstellungen", font=("Arial", font_size3), bg="#EAE5E3")
-settings_label.pack(pady=200)
-settings_back_button = tk.Button(screen_settings, text="← BACK", font=("Arial", font_size1), command=go_back)
-settings_back_button.place(x=20, y=20)
-size_button = tk.Button(screen_settings, text=current_font_size, font=("Arial", font_size3), command=change_text_size)
-size_button.pack(pady=00)
-size_button_identifier = tk.Label(screen_settings, text="Text size", font=("Arial", font_size2), bg="#EAE5E3")
-size_button_identifier.pack(pady=10)
+size_control_frame = tk.Frame(screen_settings, bg=screen_colour) 
+size_control_frame.pack(pady=20) 
+size_button_identifier = tk.Label(size_control_frame, text="Text size", font=("Arial", font_size2), bg=screen_colour)
+size_button_identifier.pack(side="left", padx=10)
+size_button = tk.Button(size_control_frame, text=current_font_size, font=("Arial", font_size3), command=change_text_size)
+size_button.pack(side="left", padx=10)
 root.bind("<BackSpace>", lambda event: go_back())
-tk.Button(screen_settings, text="Text Size", font=("Arial", font_size3))
 
+
+# Background Clolour Controll
+def all_redos():
+    global screen_colour, menu_colour, game_colour, standard_background_clours, canvas
+    # Other Screens
+    screen_settings.config(bg=screen_colour)
+    screen_highscores.config(bg=screen_colour)
+    size_button_identifier.config(bg=screen_colour)
+    settings_label.config(bg=screen_colour)
+    size_control_frame.config(bg=screen_colour)
+    background_control_frame1.config(bg=screen_colour)
+    highscore_label.config(bg=screen_colour)
+    background_control_frame2.config(bg=screen_colour)
+    background_control_frame3.config(bg=screen_colour)
+    background_titel1.config(bg=screen_colour)
+    background_titel2.config(bg=screen_colour)
+    background_titel3.config(bg=screen_colour)
+    # Menu Screen
+    screen_menu.config(bg=menu_colour)
+    menu_canvas.config(bg=menu_colour)
+    # Game Screen
+    screen_game.config(bg=game_colour)
+    word_label.config(bg=game_colour)
+    hearts_label.config(bg=game_colour)
+    auswahl_frame.config(bg=game_colour)
+    btn_links.config(bg=game_colour)
+    btn_rechts.config(bg=game_colour)
+    canvas.config(bg=game_colour)
+    keyboard_frame.config(bg=game_colour) #keyboard 
+    for frame in game_row_frames: 
+        frame.config(bg=game_colour) 
+    
+def background_screen_change1():
+    global screen_colour, standard_background_clours
+    if screen_colour == standard_background_clours[2]:
+        pass
+    else:
+        screen_colour = standard_background_clours[2]
+    all_redos()
+def background_screen_change2():
+    global screen_colour, secondary_background_clours
+    if screen_colour == secondary_background_colours[0]:
+        pass
+    else:
+        screen_colour = secondary_background_colours[0]
+    all_redos()
+def background_screen_change3():
+    global screen_colour, tertiarty_backgroud_colours
+    if screen_colour == tertiarty_backgroud_colours[0]:
+        pass
+    else:
+        screen_colour = tertiarty_backgroud_colours[0]
+    all_redos()
+def background_game_change1():
+    global game_colour, standard_background_clours
+    if game_colour == standard_background_clours[1]:
+        pass
+    else:
+        game_colour = standard_background_clours[1]
+    all_redos()
+def background_game_change2():
+    global game_colour, secondary_background_clours
+    if game_colour == secondary_background_colours[1]:
+        pass
+    else:
+        game_colour = secondary_background_colours[1]
+    all_redos()
+def background_game_change3():
+    global game_colour, tertiarty_backgroud_colours
+    if game_colour == tertiarty_backgroud_colours[1]:
+        pass
+    else:
+        game_colour = tertiarty_backgroud_colours[1]
+    all_redos()
+def background_menu_change1():
+    global menu_colour, standard_background_clours
+    if menu_colour == standard_background_clours[0]:
+        pass
+    else:
+        menu_colour = standard_background_clours[0]
+    all_redos()
+def background_menu_change2():
+    global menu_colour, secondary_background_clours
+    if menu_colour == secondary_background_colours[2]:
+        pass
+    else:
+        menu_colour = secondary_background_colours[2]
+    all_redos()
+def background_menu_change3():
+    global menu_colour, tertiarty_backgroud_colours
+    if menu_colour == tertiarty_backgroud_colours[2]:
+        pass
+    else:
+        menu_colour = tertiarty_backgroud_colours[2]
+    all_redos()
+
+background_titel1 = tk.Label(screen_settings, text="Background Colour for other Screen's", font=("Arial", font_size2), bg=screen_colour) # Screen Background
+background_titel1.pack(pady=20) 
+background_control_frame1 = tk.Frame(screen_settings, bg=screen_colour) 
+background_control_frame1.pack(pady=30) 
+background_change_standard = tk.Button(background_control_frame1, text="Background", font=("Arial", font_size3), bg=standard_background_clours[2], fg=standard_background_clours[2], relief="solid", borderwidth=1.5, command=background_screen_change1)
+background_change_standard.pack(side="left", padx=10)
+background_change_standard = tk.Button(background_control_frame1, text="Background", font=("Arial", font_size3), bg=secondary_background_colours[0], fg=secondary_background_colours[0], relief="solid", borderwidth=1.5, command=background_screen_change2)
+background_change_standard.pack(side="left", padx=10)
+background_change_standard = tk.Button(background_control_frame1, text="Background", font=("Arial", font_size3), bg=tertiarty_backgroud_colours[0], fg=tertiarty_backgroud_colours[0], relief="solid", borderwidth=1.5, command=background_screen_change3)
+background_change_standard.pack(side="left", padx=10)
+
+background_titel2 = tk.Label(screen_settings, text="Background Colour for the Game", font=("Arial", font_size2), bg=screen_colour)
+background_titel2.pack(pady=00)
+background_control_frame2 = tk.Frame(screen_settings, bg=screen_colour) # Game Background
+background_control_frame2.pack(pady=30) 
+background_change_standard = tk.Button(background_control_frame2, text="Background", font=("Arial", font_size3), bg=standard_background_clours[1], fg=standard_background_clours[1], relief="solid", borderwidth=1.5, command=background_game_change1)
+background_change_standard.pack(side="left", padx=10)
+background_change_standard = tk.Button(background_control_frame2, text="Background", font=("Arial", font_size3), bg=secondary_background_colours[1], fg=secondary_background_colours[1], relief="solid", borderwidth=1.5, command=background_game_change2)
+background_change_standard.pack(side="left", padx=10)
+background_change_standard = tk.Button(background_control_frame2, text="Background", font=("Arial", font_size3), bg=tertiarty_backgroud_colours[1], fg=tertiarty_backgroud_colours[1], relief="solid", borderwidth=1.5, command=background_game_change3)
+background_change_standard.pack(side="left", padx=10)
+
+background_titel3 = tk.Label(screen_settings, text="Background Colour for the Menu", font=("Arial", font_size2), bg=screen_colour)
+background_titel3.pack(pady=00)
+background_control_frame3 = tk.Frame(screen_settings, bg=screen_colour) # Game Background
+background_control_frame3.pack(pady=30) 
+background_change_standard = tk.Button(background_control_frame3, text="Background", font=("Arial", font_size3), bg=standard_background_clours[0], fg=standard_background_clours[0], relief="solid", borderwidth=1.5, command=background_menu_change1)
+background_change_standard.pack(side="left", padx=10)
+background_change_standard = tk.Button(background_control_frame3, text="Background", font=("Arial", font_size3), bg=secondary_background_colours[2], fg=secondary_background_colours[2], relief="solid", borderwidth=1.5, command=background_menu_change2)
+background_change_standard.pack(side="left", padx=10)
+background_change_standard = tk.Button(background_control_frame3, text="Background", font=("Arial", font_size3), bg=tertiarty_backgroud_colours[2], fg=tertiarty_backgroud_colours[2], relief="solid", borderwidth=1.5, command=background_menu_change3)
+background_change_standard.pack(side="left", padx=10)
 
 
 

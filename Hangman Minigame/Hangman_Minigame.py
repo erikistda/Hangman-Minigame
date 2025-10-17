@@ -3,6 +3,14 @@ import tkinter as tk
 import string
 from tkinter import font
 from turtle import back
+import json
+import pygame
+import os
+import threading
+
+SOUNDS_DIR = os.path.join(os.path.dirname(__file__), "Sounds")
+
+pygame.mixer.init()
 
 # Window setup
 def on_escape(event=None):
@@ -194,9 +202,11 @@ def check_letter(key):
     erratene_buchstaben.add(key)
 
     if key in geheime_wort:
-        keys[key].config(bg="#9fff9f")  # richtig = grünlich
+        keys[key].config(bg="#9fff9f")
+        play_sound_async(SOUND_CORRECT)#update
     else:
-        keys[key].config(bg="#ff9f9f")  # falsch = rot
+        keys[key].config(bg="#ff9f9f")
+        play_sound_async(SOUND_WRONG)#update
         leben -= 1
         draw_hangman_stage()
         update_hearts()
@@ -204,21 +214,25 @@ def check_letter(key):
     update_word_display()
 
     # gewonnen oder verloren
+        # gewonnen oder verloren
     if leben == 0:
         word_label.config(text=f"Verloren! Das Wort war {geheime_wort}")
+        play_sound_async(SOUND_LOSE)#update
     elif all(c in erratene_buchstaben for c in geheime_wort):
         word_label.config(text="🎉 Gewonnen!")
+        play_sound_async(SOUND_WIN)#update
+
 
 
 
 # Themen mit Wörtern
 themen_woerter = {
-    "Länder": ["AFGHANISTAN", "ÄGYPTEN", "ALBANIEN", "ALGERIEN", "ARGENTINIEN", "ARMENIEN", "AUSTRALIEN", "ÖSTERREICH", "BANGLADESCH", "BELGIEN", "BOLIVIEN", "BRASILIEN", "BULGARIEN", "KANADA", "CHILE", "CHINA", "KOLUMBIEN", "KROATIEN", "TSCHECHISCHE REPUBLIK", "DÄNEMARK", "DOMINIKANISCHE REPUBLIK", "ECUADOR", "ÄTHIOPIEN", "FINNLAND", "FRANKREICH", "GEORGIEN", "DEUTSCHLAND", "GHANA", "GRIECHENLAND", "GUATEMALA", "HAITI", "HONDURAS", "UNGARN", "ISLAND", "INDIEN", "INDONESIEN", "IRAN", "IRAK", "IRLAND", "ISRAEL", "ITALIEN", "JAPAN", "JORDANIEN", "KENIA", "KOREA, NORD", "KOREA, SÜD", "KUWAIT", "LETTLAND", "LIBANON", "LITAUEN", "LUXEMBURG", "MADAGASKAR", "MALAYSIA", "MALI", "MALTA", "MAURITIUS", "MEXIKO", "MOLDAVIEN", "MONGOLEI", "MONTENEGRO", "MAROKKO", "MOSAMBIK", "MYANMAR", "NAMIBIA", "NEPAL", "NIEDERLANDE", "NEUSEELAND", "NICARAGUA", "NIGERIA", "NORWEGEN", "PAKISTAN", "PANAMA", "PARAGUAY", "PERU", "PHILIPPINEN", "POLEN", "PORTUGAL", "KATAR", "RUMÄNIEN", "RUSSLAND", "SAUDI-ARABIEN", "SENEGAL", "SERBIEN", "SINGAPUR", "SLOWAKEI", "SLOWENIEN", "SÜDAFRIKA", "SPANIEN", "SRI LANKA", "SCHWEDEN", "SCHWEIZ", "SYRIEN", "TAIWAN", "THAILAND", "TUNESIEN", "TÜRKEI", "UKRAINE", "VEREINIGTE ARABISCHE EMIRATE", "VEREINIGTES KÖNIGREICH", "USA", "URUGUAY", "VENEZUELA", "VIETNAM", "ZAMBIA", "ZIMBABWE"],
-    "Hauptstädte": ["BERLIN", "PARIS", "LONDON", "ROM", "MADRID", "OTTAWA", "MOSKAU", "PEKING", "TOKIO", "SEOUL", "BRASILIA", "BUENOSAIRES", "MEXIKOSTADT", "CANBERRA", "WIEN", "AMSTERDAM", "BRÜSSEL", "STOCKHOLM", "OSLO", "KOPENHAGEN", "HELSINKI", "WARSCHAU", "PRAG", "BUDAPEST", "ATHEN", "ANKARA", "JERUSALEM", "RIAD", "KAIRO", "BANGKOK", "DELHI", "ISLAMABAD", "JAKARTA", "MANILA", "HANOI", "SINGAPUR", "ABUDHABI", "DOHA", "TEHERAN", "BAGDAD", "DAMASKUS", "KABUL", "RABAT", "ALGIER", "TUNIS", "PRETORIA", "NAIROBI", "VILNIUS", "TALLINN", "BERN"],
-    "Tiere": ["HUND", "KATZE", "PFERD", "KUH", "SCHWEIN", "SCHAF", "ZIEGE", "HASE", "KANINCHEN", "HAMSTER", "MAUS", "RATTE", "MEERSCHWEINCHEN", "FUCHS", "WOLF", "BÄR", "LÖWE", "TIGER", "LEOPARD", "GEPARD", "ELEFANT", "NASHORN", "FLUSSPFERD", "AFFE", "GORILLA", "SCHIMPANSE", "ORANGUTAN", "GIRAFFE", "ZEBRA", "KROKODIL", "ALLIGATOR", "SCHILDKRÖTE", "ECHSE", "SCHLANGE", "PYTHON", "KOBRA", "IGEL", "MAULWURF", "REH", "HIRSCH", "ELCH", "WILDSCHWEIN", "DACH", "MARDER", "WIESEL", "OTTER", "SEEHUND", "WALROSS", "DELFIN", "WAL", "HAI", "ROCHEN", "FISCH", "FORELLE", "LACHS", "KARPEN", "HECHT", "STÖR", "SPATZ", "AMSEL", "MEISE", "TAUBE", "ENTE", "GANS", "SCHWAN", "ADLER", "FALKE", "GEIER", "EULE", "PAPAGEI", "WELLENSITTICH", "KANARIE", "HÜHNER", "HAHN", "HENNE", "TRUTHAN", "STRAUSS", "PFAU", "KÄFER", "AMEISE", "BIENE", "WESPE", "FLIEGE", "MÜCKE", "LIBELLE", "SCHMETTERLING", "SPINNE", "SKORPION", "KREBS", "HUMMER", "QUALLE", "SEESTERN", "SEEPFERDCHEN", "OCTOPUS", "TINTENFISCH", "MUSCHEL", "SCHNECKE", "ALPAKA", "LAMA", "YAK", "REGENWURM"],
-    "Informatik": ["ALGORITHMUS", "ANWENDUNG", "ARRAY", "ARBEITSSPEICHER", "BACKEND", "BROWSER", "CACHE", "CLOUD", "CODE", "COMPUTER", "CPU", "DATEN", "DATENBANK", "DEBUGGING", "DEKODIERUNG", "DESIGN", "DIGITAL", "DOMAIN", "DOWNLOAD", "EINGABE", "ENCRYPTION", "ETHERNET", "FESTPLATTE", "FIREWALL", "FIRMWARE", "FORMAT", "FRAMEWORK", "FUNKTION", "GATEWAY", "GRAFIK", "HARDWARE", "HOSTING", "INDEX", "INFRASTRUKTUR", "INPUT", "INSTALLATION", "INTERNET", "IPADRESSE", "JAVA", "JAVASCRIPT", "KERNEL", "KEYBOARD", "KOMPILER", "KONFIGURATION", "KONTROLLE", "LAPTOP", "LINUX", "LOGIN", "LOGIK", "MAINFRAME", "MAINBOARD", "MALWARE", "MEMORY", "MODEM", "MONITOR", "NETZWERK", "OBJEKT", "OPENSOURCE", "OPTIMIERUNG", "OUTPUT", "PAKET", "PASSWORT", "PATCH", "PIXEL", "PLATTFORM", "PORTAL", "PROTOKOLL", "PROZESS", "PROZESSOR", "PROGRAMM", "PROGRAMMIERUNG", "RECHNER", "RECHTE", "ROUTER", "SCRIPT", "SERVER", "SOFTWARE", "SOURCECODE", "SPEICHER", "STRUKTUR", "SYNTAX", "SYSTEM", "TABLET", "TERMINAL", "TOOL", "UPLOAD", "URLADRESSE", "USERID", "VARIABLE", "VIRUS", "VIRTUALISIERUNG", "VPN", "WEBSITE", "WINDOWS", "WORKFLOW", "ZUGRIFF", "ZERTIFIKAT", "ZUSAMMENFÜHRUNG", "ZUWEISUNG", "ZWISCHENSPEICHER"],
-    "Elemente": ["WASSER", "FEUER", "ERDE", "LUFT", "BLITZ", "STURM", "REGEN", "NEBEL", "WOLKE", "WIND", "EISEN", "HOLZ", "STEIN", "SAND", "SCHNEE", "GLUT", "FLAMME", "ASCHE", "RAUCH", "GEWITTER", "DONNER", "HAGEL", "FLUSS", "SEELE", "ENERGIE", "MAGMA", "LAVA", "KRISTALL", "METALL", "PLASMA", "ATOM", "MOLEKÜL", "SAUERSTOFF", "KOHLENSTOFF", "STICKSTOFF", "WASSERSTOFF", "HELION", "NEUTRON", "ELEKTRON", "PROTON", "IONEN", "QUARZ", "SALZ", "KALK", "MINERAL", "ERZ", "ÖL", "BENZIN", "GAS", "DAMPF", "DRUCK", "TEMPERATUR", "LICHT", "SCHATTEN", "FUNKEN", "WÄRME", "KÄLTE", "VULKAN", "ERDBEBEN", "TSUNAMI", "GEYSIR", "GEWÄSSER", "ATMOSPHÄRE", "STRÖMUNG", "WELLEN", "TIEFE", "HÖHE", "SCHWERE", "GRAVITATION", "MAGNETISMUS", "ELEKTRIZITÄT", "FELD", "POL", "NORDEN", "SÜDEN", "OSTEN", "WESTEN", "HORIZONT", "SPHÄRE", "DIMENSION", "ZEIT", "RAUM", "KONTINENT", "OZEAN", "MEER", "INSEL", "BERG", "TAL", "HÖHLE", "KLIMA", "ZONEN", "TROPFEN", "QUELLE", "STROM", "BACH", "WURZEL", "BLATT", "AST", "STIEL", "KRONE", "STAMM"],
-    "Dinosaurier": ["TYRANNOSAURUS", "TRICERATOPS", "VELOCIRAPTOR", "STEGOSAURUS", "BRACHIOSAURUS", "ALLOSAURUS", "SPINOSAURUS", "ANKYLOSAURUS", "IGUANODON", "DIPLODOCUS", "APATOSAURUS", "PACHYCEPHALOSAURUS", "CARNOTAURUS", "GIGANOTOSAURUS", "MEGALOSAURUS", "DEINONYCHUS", "MAIASAURA", "PARASAUROLOPHUS", "SAUROLOPHUS", "CORYTHOSAURUS", "EDMONTOSAURUS", "LAMBEOSAURUS", "OURANOSAURUS", "THERIZINOSAURUS", "MICRORAPTOR", "ARCHAEOPTERYX", "TROODON", "ORNITHOMIMUS", "STRUTHIOMIMUS", "DRACOREX", "STYRACOSAURUS", "PENTACERATOPS", "PROTOCERATOPS", "PSITTACOSAURUS", "HYPSILOPHODON", "LEAELLYNASAURA", "MUTTABURRASAURUS", "TENONTOSAURUS", "CERATOSAURUS", "COELOPHYSIS", "HERRERASAURUS", "PLATEOSAURUS", "MASSOSPONDYLUS", "RIOJASAURUS", "SHUNOSAURUS", "JOBARIA", "NIGERSAURUS", "TARBOSAURUS", "MONOLOPHOSAURUS", "MAJUNGASAURUS"]
+    "Länder": ["SCHWEIZ", "ITALIEN", "FRANKREICH", "DEUTSCHLAND"],
+    "Hauptstädte": ["BERN", "PARIS", "ROM", "BERLIN"],
+    "Tiere": ["KATZE", "HUND", "ELEFANT", "LÖWE"],
+    "Informatik": ["PYTHON", "ALGORITHMUS", "DATENBANK", "SOFTWARE"],
+    "Elemente": ["WASSER", "FEUER", "ERDE", "LUFT"],
+    "Dinosaurier": ["CARNOTAURUS", "TREX", "VELOCIRAPTOR", "STEGOSAURUS"]
 }
 
 kategorie_index = 0
@@ -388,8 +402,65 @@ highscore_back_button = tk.Button(screen_highscores, text="← BACK", font=("Ari
 highscore_back_button.place(x=20, y=20)
 root.bind("<BackSpace>", lambda event: go_back())
 
+# -----------------------
+# Hilfsfunktionen: Sound
+# -----------------------
+
+import winsound
+import time
+
+
+def play_sound_async(sound):#update
+    threading.Thread(target=play_sound, args=(sound,), daemon=True).start() #update
+
+# Angepasste load_sound-Funktion
+def load_sound(name):
+    """
+    Gibt ein Dictionary zurück, das die Frequenz(en) und Dauer(n) des Sounds enthält.
+    """
+    if name == "success.wav":  # Win-Sound
+        return {"freq": [880], "dur": [300]}
+    elif name == "failed.wav":  # Fehler-Sound
+        return {"freq": [220], "dur": [300]}
+    elif name == "win.wav":     # Sieg-Melodie (kurze Melodie)
+        return {"freq": [660, 880, 1320], "dur": [150, 150, 150]}
+    elif name == "lost.wav":    # Game Over Sound
+        return {"freq": [330, 220], "dur": [300, 300]}
+    else:
+        return None
+
+# Sounds laden
+SOUND_CORRECT = load_sound("success.wav")
+SOUND_WRONG   = load_sound("failed.wav")
+SOUND_WIN     = load_sound("win.wav")
+SOUND_LOSE    = load_sound("lost.wav")
+
+# Abspiel-Funktion
+def play_sound(sound):
+    if not sound:
+        return
+    try:
+        for f, d in zip(sound["freq"], sound["dur"]):
+            winsound.Beep(f, d)
+            time.sleep(0.05)  # Kurze Pause zwischen den Tönen
+    except Exception as e:
+        print("Play sound error:", e)
+
+# Test
+if __name__ == "__main__":
+    play_sound(SOUND_CORRECT)
+    time.sleep(0.4)
+    play_sound(SOUND_WRONG)
+    time.sleep(0.4)
+    play_sound(SOUND_WIN)
+    time.sleep(1)
+    play_sound(SOUND_LOSE)
+
 
 
 # Start mit Menü
 screen_menu.tkraise()
 root.mainloop()
+
+
+

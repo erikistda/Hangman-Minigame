@@ -56,20 +56,48 @@ for frame in (screen_menu,screen_game,screen_settings,screen_highscores):
 #Zurück Funkrion
 def go_back():
     global auswahl_aktiv
+    # NEUE FUNKTION: Auswahl anzeigen (Neues Spiel starten)
+def go_back():
+    global auswahl_aktiv,leben
     
     # 1. Timer stoppen und ausblenden
     stop_timer() 
-    timer_label.place_forget() # NEU: Timer-Anzeige ausblenden!
+    timer_label.place_forget()
     
     # 2. Spielzustand zurücksetzen und Auswahl wiederherstellen
     auswahl_frame.place(relx=0.5, rely=0.55, anchor="center") 
-    auswahl_aktiv = True # Aktiviert die Themenauswahl wieder
+    auswahl_aktiv = True 
+    leben = 6
+    update_hearts()
+    word_label.config(text="")
+    canvas.delete("all")
     
     # 3. Oberfläche aufräumen
     reset_keyboard()
     
     # Zurück zum Hauptmenü
     screen_menu.tkraise()
+
+# NEUE FUNKTION: Auswahl anzeigen (Neues Spiel starten)
+def show_selection():
+    """Zeigt den Game Screen und die Themenauswahl an, um ein neues Spiel zu starten."""
+    global auswahl_aktiv
+    
+    # 1. Vorheriges Spiel aufräumen
+    btn_retry.place_forget() 
+    reset_keyboard() 
+    leben = 6
+    update_hearts() 
+    word_label.config(text="")
+    hearts_label.pack_forget()
+    canvas.delete("all")
+    
+    # 2. Auswahl-Frame platzieren und Zustand setzen
+    auswahl_frame.place(relx=0.5, rely=0.55, anchor="center")
+    auswahl_aktiv = True
+    
+    # 3. Zum Spielbildschirm wechseln
+    screen_game.tkraise()
 
 #Menu
 # Hangman-Logo im Menü
@@ -138,7 +166,7 @@ menu_canvas.create_line(
 )
 
 btn_spielen=tk.Button(screen_menu,text="PLAY",font=("Arial",font_size2),width=15,
-                      command=lambda:screen_game.tkraise())
+                      command=show_selection)
 btn_spielen.pack(pady=10)
 
 btn_einstellungen=tk.Button(screen_menu,text="SETTINGS",font=("Arial",font_size2),width=15,
@@ -193,7 +221,7 @@ game_back_button.place(x=20, y=20)
 word_label = tk.Label(screen_game, text="", font=("Courier", font_size4), bg="#AAC1D2") # Wortanzeige 
 word_label.pack(pady=10)
 hearts_label = tk.Label(screen_game, text="", font=("Arial", font_size2), bg="#AAC1D2") # Herzen
-hearts_label.pack()
+
 def update_hearts():
     hearts_label.config(text="❤️ " * leben)
 
@@ -285,8 +313,8 @@ def check_letter(key):
 
 # Retry anzeigen
 def show_retry_button():
-    """Platziert den Retry Button oben mittig auf dem Game Screen."""
-    btn_retry.place(relx=0.5, rely=0.08, anchor='center')
+    """Platziert den Retry Button über der Tastatur (wo die Themenauswahl war)."""
+    btn_retry.place(relx=0.5, rely=0.53, anchor='center')
 
 # Themen mit Wörtern
 themen_woerter = {
@@ -313,8 +341,8 @@ timer_job = None # Für die root.after-Funktion
 timer_label = tk.Label(screen_game, text="00:00:000", font=("Arial", font_size3), bg=game_colour)
 # Retry Button 
 # Unicode-Symbol für Wiederholen: 🔄 (U+1F504)
-btn_retry = tk.Button(screen_game, text="🔄", font=("Arial", font_size4),
-                      command=lambda: start_game(event=None), # Ruft start_game auf
+btn_retry = tk.Button(screen_game, text="🔄", font=("Arial", font_size5),
+                      command=show_selection,
                       bg=game_colour, fg="#333333", # fg ist die Schriftfarbe (dunkelgrau)
                       relief="raised", bd=3)
 
@@ -357,12 +385,25 @@ def prev_kategorie(event=None):
 # Spiel starten   
 
 def handle_enter(event):
-    """Startet das Spiel nur, wenn die Auswahl noch aktiv ist (verhindert Resets)."""
+    """
+    Behandelt den Tastendruck 'Enter'.
+    Startet Spiel bei Auswahl ODER klickt den Retry-Button.
+    """
+    global auswahl_aktiv
+    
+    # NEU: Prüfen, ob der Retry-Button sichtbar ist (d.h. Spiel ist beendet)
+    # Wenn ein Spiel vorbei ist, ist die Auswahl nicht aktiv, aber der Retry-Button sichtbar.
+    if btn_retry.winfo_ismapped():
+        # Führt den Befehl des Retry-Buttons aus (was show_selection() ist)
+        show_selection()
+        return
+
+    # Wenn die Auswahl aktiv ist (normaler Start)
     if auswahl_aktiv:
         start_game()                                                 #NEU
 def start_game(event=None):
     global geheime_wort, erratene_buchstaben, leben, auswahl_aktiv, timer_start_time, timer_running
-    btn_retry.place_forget()
+    
     
     auswahl_aktiv = False
     auswahl_frame.place_forget()
@@ -376,12 +417,14 @@ def start_game(event=None):
     geheime_wort = random.choice(themen_woerter[kategorien[kategorie_index]])
     erratene_buchstaben = set()
     leben = 6
+
     update_word_display()
     draw_gallows()
+    hearts_label.pack()
     update_hearts()
 
 
-# --- Tastatursteuerung ---
+# Tastatursteuerung 
 umlaut_map = {"adiaeresis": "Ä", "odiaeresis": "Ö", "udiaeresis": "Ü"}
 
 def on_key_press(event):
@@ -676,6 +719,3 @@ if __name__ == "__main__":
 # Start mit Menü
 screen_menu.tkraise()
 root.mainloop()
-
-
-

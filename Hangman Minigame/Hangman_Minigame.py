@@ -3,7 +3,15 @@ import tkinter as tk
 import string
 from tkinter import font
 from turtle import back
+import json
+import pygame
+import os
+import threading
+import time                                                                     # NEU
 
+SOUNDS_DIR = os.path.join(os.path.dirname(__file__), "Sounds")
+
+pygame.mixer.init()
 # Settings
 font_sizes_standard = [14,20,24,28,40,60]
 font_sizes_big = [18, 26, 31, 36, 52, 78]
@@ -28,7 +36,7 @@ game_row_frames = []
 # Window setup
 def on_escape(event=None):
     root.destroy()
-root = tk.Tk()
+root = tk.Tk() 
 root.title("Hangman Minigame")
 root.attributes("-fullscreen",True)
 root.configure(bg=menu_colour)
@@ -36,6 +44,7 @@ root.bind_all("<Escape>",on_escape)
 root.resizable(False,False)
 
 #Screens
+
 screen_menu = tk.Frame(root,bg=menu_colour)
 screen_game = tk.Frame(root,bg=game_colour)
 screen_settings = tk.Frame(root,bg=screen_colour)
@@ -44,10 +53,51 @@ screen_highscores = tk.Frame(root,bg=screen_colour)
 for frame in (screen_menu,screen_game,screen_settings,screen_highscores):
     frame.place(relwidth=1,relheight=1)
 
-
 #Zurück Funkrion
 def go_back():
+    global auswahl_aktiv
+    # NEUE FUNKTION: Auswahl anzeigen (Neues Spiel starten)
+def go_back():
+    global auswahl_aktiv,leben
+    
+    # 1. Timer stoppen und ausblenden
+    stop_timer() 
+    timer_label.place_forget()
+    
+    # 2. Spielzustand zurücksetzen und Auswahl wiederherstellen
+    auswahl_frame.place(relx=0.5, rely=0.55, anchor="center") 
+    auswahl_aktiv = True 
+    leben = 6
+    update_hearts()
+    word_label.config(text="")
+    canvas.delete("all")
+    
+    # 3. Oberfläche aufräumen
+    reset_keyboard()
+    
+    # Zurück zum Hauptmenü
     screen_menu.tkraise()
+
+# NEUE FUNKTION: Auswahl anzeigen (Neues Spiel starten)
+def show_selection():
+    """Zeigt den Game Screen und die Themenauswahl an, um ein neues Spiel zu starten."""
+    global auswahl_aktiv
+    
+    # 1. Vorheriges Spiel aufräumen
+    btn_retry.place_forget() 
+    reset_keyboard() 
+    leben = 6
+    update_hearts() 
+    word_label.config(text="")
+    hearts_label.pack_forget()
+    canvas.delete("all")
+    
+    # 2. Auswahl-Frame platzieren und Zustand setzen
+    auswahl_frame.place(relx=0.5, rely=0.55, anchor="center")
+    auswahl_aktiv = True
+    
+    # 3. Zum Spielbildschirm wechseln
+    screen_game.tkraise()
 
 #Menu
 # Hangman-Logo im Menü
@@ -115,9 +165,8 @@ menu_canvas.create_line(
     fill="black", width=2
 )
 
-
 btn_spielen=tk.Button(screen_menu,text="PLAY",font=("Arial",font_size2),width=15,
-                      command=lambda:screen_game.tkraise())
+                      command=show_selection)
 btn_spielen.pack(pady=10)
 
 btn_einstellungen=tk.Button(screen_menu,text="SETTINGS",font=("Arial",font_size2),width=15,
@@ -136,9 +185,9 @@ btn_beenden.pack(pady=10)
 import random
 
 # --- Aufbau des Screens ---
-screen_game.configure(bg=game_colour)
+screen_game.configure(bg="#AAC1D2")
 # Zeichenfläche für Hangman 
-canvas = tk.Canvas(screen_game, width=400, height=300, bg=game_colour, highlightthickness=0)
+canvas = tk.Canvas(screen_game, width=400, height=300, bg="#AAC1D2", highlightthickness=0)
 canvas.pack(pady=20)
 
 def draw_gallows():
@@ -163,22 +212,60 @@ def draw_hangman_stage():
         parts[index]()
 
 def update_word_display():
-    display = " ".join([c if c in erratene_buchstaben else "_" for c in geheime_wort])
+    display = " ".join([
+        c if (c in erratene_buchstaben or c in [" ", "-", ","]) else "_"
+        for c in geheime_wort
+    ])
     word_label.config(text=display)
 
 
 game_back_button = tk.Button(screen_game, text="← BACK", font=("Arial", font_size1), command=go_back)
 game_back_button.place(x=20, y=20)
-word_label = tk.Label(screen_game, text="", font=("Courier", font_size4), bg=game_colour) # Wortanzeige 
+word_label = tk.Label(screen_game, text="", font=("Courier", font_size4), bg="#AAC1D2") # Wortanzeige 
 word_label.pack(pady=10)
-hearts_label = tk.Label(screen_game, text="", font=("Arial", font_size2), bg=game_colour) # Herzen
-hearts_label.pack()
+hearts_label = tk.Label(screen_game, text="", font=("Arial", font_size2), bg="#AAC1D2") # Herzen
+
 def update_hearts():
     hearts_label.config(text="❤️ " * leben)
 
+# --- NEUE TIMER-FUNKTIONEN ---
+def stop_timer():
+    """Stoppt den Timer und bricht die nächste geplante Aktualisierung ab."""
+    global timer_running, timer_job
+    timer_running = False
+    if timer_job:
+        root.after_cancel(timer_job)
+        timer_job = None
+        
+def update_timer():
+    """Berechnet die verstrichene Zeit und aktualisiert das Label."""               #NEU
+    global timer_job, timer_start_time, timer_running
+    
+    if not timer_running:
+        return
+    
+    elapsed_time = time.time() - timer_start_time
+    
+    minutes = int(elapsed_time // 60)
+    seconds = int(elapsed_time % 60)
+    # Millisekunden: Differenz zur vollen Sekunde, multipliziert mit 1000
+    milliseconds = int((elapsed_time - int(elapsed_time)) * 1000)
+    
+    # Formatierung: MM:SS:mmm
+    timer_display = f"{minutes:02d}:{seconds:02d}:{milliseconds:03d}"
+    timer_label.config(text=timer_display)
+    
+    # Aktualisiere in 50 Millisekunden (20 Mal pro Sekunde)
+    timer_job = root.after(50, update_timer)
+#  ENDE NEUE TIMER-FUNKTIONEN
+def reset_keyboard():
+    """Setzt die Hintergrundfarbe aller Tasten auf Weiß zurück."""
+    global keys
+    for key in keys.values():
+        key.config(bg="white")
 
 # Tastatur 
-keyboard_frame = tk.Frame(screen_game, bg=game_colour)
+keyboard_frame = tk.Frame(screen_game, bg="#AAC1D2")
 keyboard_frame.pack(side="bottom", pady=50)
 
 keys = {}
@@ -186,7 +273,7 @@ letters = list("QWERTZUIOPÜASDFGHJKLÖÄYXCVBNM")
 layout = ["QWERTZUIOPÜ", "ASDFGHJKLÖÄ", "YXCVBNM"]
 
 for row in layout:
-    row_frame = tk.Frame(keyboard_frame, bg=game_colour)
+    row_frame = tk.Frame(keyboard_frame, bg="#AAC1D2")
     row_frame.pack()
     game_row_frames.append(row_frame)
     for char in row:
@@ -204,31 +291,44 @@ def check_letter(key):
     erratene_buchstaben.add(key)
 
     if key in geheime_wort:
-        keys[key].config(bg="#9fff9f")  # richtig = grünlich
+        keys[key].config(bg="#9fff9f")
+        play_sound_async(SOUND_CORRECT)
     else:
-        keys[key].config(bg="#ff9f9f")  # falsch = rot
+        keys[key].config(bg="#ff9f9f")
+        play_sound_async(SOUND_WRONG)
         leben -= 1
         draw_hangman_stage()
         update_hearts()
-
     update_word_display()
 
     # gewonnen oder verloren
     if leben == 0:
+        stop_timer()
         word_label.config(text=f"Verloren! Das Wort war {geheime_wort}")
+        play_sound_async(SOUND_LOSE)
+        # Warte 4 Sekunden und zeige dann den Retry Button an
+        threading.Timer(1.0, show_retry_button).start()
     elif all(c in erratene_buchstaben for c in geheime_wort):
-        word_label.config(text="🎉 Gewonnen!")
+        stop_timer()
+        word_label.config(text="🎉 Gewonnen! Das Wort war "+geheime_wort)
+        play_sound_async(SOUND_WIN)
+        elapsed_time = time.time() - timer_start_time
+        time_ms = int(elapsed_time * 1000)
+     
 
-
+# Retry anzeigen
+def show_retry_button():
+    """Platziert den Retry Button über der Tastatur (wo die Themenauswahl war)."""
+    btn_retry.place(relx=0.5, rely=0.53, anchor='center')
 
 # Themen mit Wörtern
 themen_woerter = {
-    "Länder": ["SCHWEIZ", "ITALIEN", "FRANKREICH", "DEUTSCHLAND"],
-    "Hauptstädte": ["BERN", "PARIS", "ROM", "BERLIN"],
-    "Tiere": ["KATZE", "HUND", "ELEFANT", "LÖWE"],
-    "Informatik": ["PYTHON", "ALGORITHMUS", "DATENBANK", "SOFTWARE"],
-    "Elemente": ["WASSER", "FEUER", "ERDE", "LUFT"],
-    "Dinosaurier": ["CARNOTAURUS", "TREX", "VELOCIRAPTOR", "STEGOSAURUS"]
+    "Länder": ["AFGHANISTAN", "ÄGYPTEN", "ALBANIEN", "ALGERIEN", "ARGENTINIEN", "ARMENIEN", "AUSTRALIEN", "ÖSTERREICH", "BANGLADESCH", "BELGIEN", "BOLIVIEN", "BRASILIEN", "BULGARIEN", "KANADA", "CHILE", "CHINA", "KOLUMBIEN", "KROATIEN", "TSCHECHISCHE REPUBLIK", "DÄNEMARK", "DOMINIKANISCHE REPUBLIK", "ECUADOR", "ÄTHIOPIEN", "FINNLAND", "FRANKREICH", "GEORGIEN", "DEUTSCHLAND", "GHANA", "GRIECHENLAND", "GUATEMALA", "HAITI", "HONDURAS", "UNGARN", "ISLAND", "INDIEN", "INDONESIEN", "IRAN", "IRAK", "IRLAND", "ISRAEL", "ITALIEN", "JAPAN", "JORDANIEN", "KENIA", "KOREA, NORD", "KOREA, SÜD", "KUWAIT", "LETTLAND", "LIBANON", "LITAUEN", "LUXEMBURG", "MADAGASKAR", "MALAYSIA", "MALI", "MALTA", "MAURITIUS", "MEXIKO", "MOLDAVIEN", "MONGOLEI", "MONTENEGRO", "MAROKKO", "MOSAMBIK", "MYANMAR", "NAMIBIA", "NEPAL", "NIEDERLANDE", "NEUSEELAND", "NICARAGUA", "NIGERIA", "NORWEGEN", "PAKISTAN", "PANAMA", "PARAGUAY", "PERU", "PHILIPPINEN", "POLEN", "PORTUGAL", "KATAR", "RUMÄNIEN", "RUSSLAND", "SAUDI-ARABIEN", "SENEGAL", "SERBIEN", "SINGAPUR", "SLOWAKEI", "SLOWENIEN", "SÜDAFRIKA", "SPANIEN", "SRI LANKA", "SCHWEDEN", "SCHWEIZ", "SYRIEN", "TAIWAN", "THAILAND", "TUNESIEN", "TÜRKEI", "UKRAINE", "VEREINIGTE ARABISCHE EMIRATE", "VEREINIGTES KÖNIGREICH", "USA", "URUGUAY", "VENEZUELA", "VIETNAM", "ZAMBIA", "ZIMBABWE"],
+    "Hauptstädte": ["BERLIN", "PARIS", "LONDON", "ROM", "MADRID", "OTTAWA", "MOSKAU", "PEKING", "TOKIO", "SEOUL", "BRASILIA", "BUENOSAIRES", "MEXIKOSTADT", "CANBERRA", "WIEN", "AMSTERDAM", "BRÜSSEL", "STOCKHOLM", "OSLO", "KOPENHAGEN", "HELSINKI", "WARSCHAU", "PRAG", "BUDAPEST", "ATHEN", "ANKARA", "JERUSALEM", "RIAD", "KAIRO", "BANGKOK", "DELHI", "ISLAMABAD", "JAKARTA", "MANILA", "HANOI", "SINGAPUR", "ABUDHABI", "DOHA", "TEHERAN", "BAGDAD", "DAMASKUS", "KABUL", "RABAT", "ALGIER", "TUNIS", "PRETORIA", "NAIROBI", "VILNIUS", "TALLINN", "BERN"],
+    "Tiere": ["HUND", "KATZE", "PFERD", "KUH", "SCHWEIN", "SCHAF", "ZIEGE", "HASE", "KANINCHEN", "HAMSTER", "MAUS", "RATTE", "MEERSCHWEINCHEN", "FUCHS", "WOLF", "BÄR", "LÖWE", "TIGER", "LEOPARD", "GEPARD", "ELEFANT", "NASHORN", "FLUSSPFERD", "AFFE", "GORILLA", "SCHIMPANSE", "ORANGUTAN", "GIRAFFE", "ZEBRA", "KROKODIL", "ALLIGATOR", "SCHILDKRÖTE", "ECHSE", "SCHLANGE", "PYTHON", "KOBRA", "IGEL", "MAULWURF", "REH", "HIRSCH", "ELCH", "WILDSCHWEIN", "DACH", "MARDER", "WIESEL", "OTTER", "SEEHUND", "WALROSS", "DELFIN", "WAL", "HAI", "ROCHEN", "FISCH", "FORELLE", "LACHS", "KARPEN", "HECHT", "STÖR", "SPATZ", "AMSEL", "MEISE", "TAUBE", "ENTE", "GANS", "SCHWAN", "ADLER", "FALKE", "GEIER", "EULE", "PAPAGEI", "WELLENSITTICH", "KANARIE", "HÜHNER", "HAHN", "HENNE", "TRUTHAN", "STRAUSS", "PFAU", "KÄFER", "AMEISE", "BIENE", "WESPE", "FLIEGE", "MÜCKE", "LIBELLE", "SCHMETTERLING", "SPINNE", "SKORPION", "KREBS", "HUMMER", "QUALLE", "SEESTERN", "SEEPFERDCHEN", "OCTOPUS", "TINTENFISCH", "MUSCHEL", "SCHNECKE", "ALPAKA", "LAMA", "YAK", "REGENWURM"],
+    "Informatik": ["ALGORITHMUS", "ANWENDUNG", "ARRAY", "ARBEITSSPEICHER", "BACKEND", "BROWSER", "CACHE", "CLOUD", "CODE", "COMPUTER", "CPU", "DATEN", "DATENBANK", "DEBUGGING", "DEKODIERUNG", "DESIGN", "DIGITAL", "DOMAIN", "DOWNLOAD", "EINGABE", "ENCRYPTION", "ETHERNET", "FESTPLATTE", "FIREWALL", "FIRMWARE", "FORMAT", "FRAMEWORK", "FUNKTION", "GATEWAY", "GRAFIK", "HARDWARE", "HOSTING", "INDEX", "INFRASTRUKTUR", "INPUT", "INSTALLATION", "INTERNET", "IPADRESSE", "JAVA", "JAVASCRIPT", "KERNEL", "KEYBOARD", "KOMPILER", "KONFIGURATION", "KONTROLLE", "LAPTOP", "LINUX", "LOGIN", "LOGIK", "MAINFRAME", "MAINBOARD", "MALWARE", "MEMORY", "MODEM", "MONITOR", "NETZWERK", "OBJEKT", "OPENSOURCE", "OPTIMIERUNG", "OUTPUT", "PAKET", "PASSWORT", "PATCH", "PIXEL", "PLATTFORM", "PORTAL", "PROTOKOLL", "PROZESS", "PROZESSOR", "PROGRAMM", "PROGRAMMIERUNG", "RECHNER", "RECHTE", "ROUTER", "SCRIPT", "SERVER", "SOFTWARE", "SOURCECODE", "SPEICHER", "STRUKTUR", "SYNTAX", "SYSTEM", "TABLET", "TERMINAL", "TOOL", "UPLOAD", "URLADRESSE", "USERID", "VARIABLE", "VIRUS", "VIRTUALISIERUNG", "VPN", "WEBSITE", "WINDOWS", "WORKFLOW", "ZUGRIFF", "ZERTIFIKAT", "ZUSAMMENFÜHRUNG", "ZUWEISUNG", "ZWISCHENSPEICHER"],
+    "Elemente": ["WASSER", "FEUER", "ERDE", "LUFT", "BLITZ", "STURM", "REGEN", "NEBEL", "WOLKE", "WIND", "EISEN", "HOLZ", "STEIN", "SAND", "SCHNEE", "GLUT", "FLAMME", "ASCHE", "RAUCH", "GEWITTER", "DONNER", "HAGEL", "FLUSS", "SEELE", "ENERGIE", "MAGMA", "LAVA", "KRISTALL", "METALL", "PLASMA", "ATOM", "MOLEKÜL", "SAUERSTOFF", "KOHLENSTOFF", "STICKSTOFF", "WASSERSTOFF", "HELION", "NEUTRON", "ELEKTRON", "PROTON", "IONEN", "QUARZ", "SALZ", "KALK", "MINERAL", "ERZ", "ÖL", "BENZIN", "GAS", "DAMPF", "DRUCK", "TEMPERATUR", "LICHT", "SCHATTEN", "FUNKEN", "WÄRME", "KÄLTE", "VULKAN", "ERDBEBEN", "TSUNAMI", "GEYSIR", "GEWÄSSER", "ATMOSPHÄRE", "STRÖMUNG", "WELLEN", "TIEFE", "HÖHE", "SCHWERE", "GRAVITATION", "MAGNETISMUS", "ELEKTRIZITÄT", "FELD", "POL", "NORDEN", "SÜDEN", "OSTEN", "WESTEN", "HORIZONT", "SPHÄRE", "DIMENSION", "ZEIT", "RAUM", "KONTINENT", "OZEAN", "MEER", "INSEL", "BERG", "TAL", "HÖHLE", "KLIMA", "ZONEN", "TROPFEN", "QUELLE", "STROM", "BACH", "WURZEL", "BLATT", "AST", "STIEL", "KRONE", "STAMM"],
+    "Dinosaurier": ["TYRANNOSAURUS", "TRICERATOPS", "VELOCIRAPTOR", "STEGOSAURUS", "BRACHIOSAURUS", "ALLOSAURUS", "SPINOSAURUS", "ANKYLOSAURUS", "IGUANODON", "DIPLODOCUS", "APATOSAURUS", "PACHYCEPHALOSAURUS", "CARNOTAURUS", "GIGANOTOSAURUS", "MEGALOSAURUS", "DEINONYCHUS", "MAIASAURA", "PARASAUROLOPHUS", "SAUROLOPHUS", "CORYTHOSAURUS", "EDMONTOSAURUS", "LAMBEOSAURUS", "OURANOSAURUS", "THERIZINOSAURUS", "MICRORAPTOR", "ARCHAEOPTERYX", "TROODON", "ORNITHOMIMUS", "STRUTHIOMIMUS", "DRACOREX", "STYRACOSAURUS", "PENTACERATOPS", "PROTOCERATOPS", "PSITTACOSAURUS", "HYPSILOPHODON", "LEAELLYNASAURA", "MUTTABURRASAURUS", "TENONTOSAURUS", "CERATOSAURUS", "COELOPHYSIS", "HERRERASAURUS", "PLATEOSAURUS", "MASSOSPONDYLUS", "RIOJASAURUS", "SHUNOSAURUS", "JOBARIA", "NIGERSAURUS", "TARBOSAURUS", "MONOLOPHOSAURUS", "MAJUNGASAURUS"]
 }
 
 kategorie_index = 0
@@ -238,16 +338,29 @@ erratene_buchstaben = set()
 leben = 6
 hangman_parts = []
 
+# Globale Timer-Variablen                                           # NEU:
+timer_running = False
+timer_start_time = 0.0
+timer_job = None # Für die root.after-Funktion
+# Label für die Timer-Anzeige                                       # NEU: 
+timer_label = tk.Label(screen_game, text="00:00:000", font=("Arial", font_size3), bg=game_colour)
+# Retry Button 
+# Unicode-Symbol für Wiederholen: 🔄 (U+1F504)
+btn_retry = tk.Button(screen_game, text="🔄", font=("Arial", font_size5),
+                      command=show_selection,
+                      bg=game_colour, fg="#333333", # fg ist die Schriftfarbe (dunkelgrau)
+                      relief="raised", bd=3)
+
 
 # Frame für Auswahl
-auswahl_frame = tk.Frame(screen_game, bg=game_colour)
+auswahl_frame = tk.Frame(screen_game, bg="#AAC1D2")
 auswahl_frame.pack(expand=True)
 auswahl_frame.place(relx=0.5, rely=0.55, anchor="center")
 
 
 kategorien = list(themen_woerter.keys())
 
-btn_links = tk.Label(auswahl_frame, text="◀", font=("Arial", 40), bg=game_colour, cursor="hand2")
+btn_links = tk.Label(auswahl_frame, text="◀", font=("Arial", font_size5), bg="#AAC1D2", cursor="hand2")
 btn_links.grid(row=0, column=0, padx=40)
 
 auswahl_label = tk.Label(auswahl_frame, text=kategorien[kategorie_index],
@@ -255,7 +368,7 @@ auswahl_label = tk.Label(auswahl_frame, text=kategorien[kategorie_index],
                          bg="white", relief="raised", borderwidth=3, cursor="hand2")
 auswahl_label.grid(row=0, column=1)
 
-btn_rechts = tk.Label(auswahl_frame, text="▶", font=("Arial", 40), bg="#AAC1D2", cursor="hand2")
+btn_rechts = tk.Label(auswahl_frame, text="▶", font=("Arial", font_size5), bg="#AAC1D2", cursor="hand2")
 btn_rechts.grid(row=0, column=2, padx=40)
 
 # --- Funktionen ---
@@ -274,20 +387,50 @@ def prev_kategorie(event=None):
     kategorie_index = (kategorie_index - 1) % len(kategorien)
     update_kategorie()
 
-# --- Spiel starten ---
+# Spiel starten   
+
+def handle_enter(event):
+    """
+    Behandelt den Tastendruck 'Enter'.
+    Startet Spiel bei Auswahl ODER klickt den Retry-Button.
+    """
+    global auswahl_aktiv
+    
+    # NEU: Prüfen, ob der Retry-Button sichtbar ist (d.h. Spiel ist beendet)
+    # Wenn ein Spiel vorbei ist, ist die Auswahl nicht aktiv, aber der Retry-Button sichtbar.
+    if btn_retry.winfo_ismapped():
+        # Führt den Befehl des Retry-Buttons aus (was show_selection() ist)
+        show_selection()
+        return
+
+    # Wenn die Auswahl aktiv ist (normaler Start)
+    if auswahl_aktiv:
+        start_game()                                                 #NEU
 def start_game(event=None):
-    global geheime_wort, erratene_buchstaben, leben, auswahl_aktiv
+    global geheime_wort, erratene_buchstaben, leben, auswahl_aktiv, timer_start_time, timer_running
+    
+    
     auswahl_aktiv = False
-    auswahl_frame.pack_forget()
+    auswahl_frame.place_forget()
+    
+    # Timer starten und anzeigen
+    timer_start_time = time.time()
+    timer_running = True
+    update_timer()
+    timer_label.place(relx=1.0, rely=0.0, x=-20, y=20, anchor='ne') # Zeigt den Timer unter dem 'BACK'-Button an
+    
     geheime_wort = random.choice(themen_woerter[kategorien[kategorie_index]])
     erratene_buchstaben = set()
+    erratene_buchstaben.update(" ")
     leben = 6
+
     update_word_display()
     draw_gallows()
+    hearts_label.pack()
     update_hearts()
 
 
-# --- Tastatursteuerung ---
+# Tastatursteuerung 
 umlaut_map = {"adiaeresis": "Ä", "odiaeresis": "Ö", "udiaeresis": "Ü"}
 
 def on_key_press(event):
@@ -307,7 +450,7 @@ btn_rechts.bind("<Button-1>", next_kategorie)
 auswahl_label.bind("<Button-1>", start_game)
 root.bind("<Left>", prev_kategorie)
 root.bind("<Right>", next_kategorie)
-root.bind("<Return>", start_game)
+root.bind("<Return>", handle_enter)
 
 
 # --SETTINGS-Screen--
@@ -359,6 +502,7 @@ def change_text_size():
     game_back_button.config(font=("Arial", font_size1))
     word_label.config(font=("Courier", font_size4))
     hearts_label.config(font=("Arial", font_size2))
+    timer_label.config(font=("Arial", font_size3))                                  #NEU
     
     # Settings - Menu Screen
     btn_spielen.config(font=("Arial", font_size2))
@@ -409,6 +553,9 @@ def all_redos():
     screen_game.config(bg=game_colour)
     word_label.config(bg=game_colour)
     hearts_label.config(bg=game_colour)
+    timer_label.config(bg=game_colour) # NEU
+    auswahl_frame.config(bg=game_colour)
+    btn_retry.config(bg=game_colour)
     auswahl_frame.config(bg=game_colour)
     btn_links.config(bg=game_colour)
     btn_rechts.config(bg=game_colour)
@@ -494,7 +641,7 @@ background_change_standard.pack(side="left", padx=10)
 
 background_titel2 = tk.Label(screen_settings, text="Background Colour for the Game", font=("Arial", font_size2), bg=screen_colour)
 background_titel2.pack(pady=00)
-background_control_frame2 = tk.Frame(screen_settings, bg=screen_colour) # Game Background
+background_control_frame2 = tk.Frame(screen_settings, bg=screen_colour) 
 background_control_frame2.pack(pady=30) 
 background_change_standard = tk.Button(background_control_frame2, text="Background", font=("Arial", font_size3), bg=standard_background_clours[1], fg=standard_background_clours[1], relief="solid", borderwidth=1.5, command=background_game_change1)
 background_change_standard.pack(side="left", padx=10)
@@ -505,7 +652,7 @@ background_change_standard.pack(side="left", padx=10)
 
 background_titel3 = tk.Label(screen_settings, text="Background Colour for the Menu", font=("Arial", font_size2), bg=screen_colour)
 background_titel3.pack(pady=00)
-background_control_frame3 = tk.Frame(screen_settings, bg=screen_colour) # Game Background
+background_control_frame3 = tk.Frame(screen_settings, bg=screen_colour) 
 background_control_frame3.pack(pady=30) 
 background_change_standard = tk.Button(background_control_frame3, text="Background", font=("Arial", font_size3), bg=standard_background_clours[0], fg=standard_background_clours[0], relief="solid", borderwidth=1.5, command=background_menu_change1)
 background_change_standard.pack(side="left", padx=10)
@@ -514,13 +661,64 @@ background_change_standard.pack(side="left", padx=10)
 background_change_standard = tk.Button(background_control_frame3, text="Background", font=("Arial", font_size3), bg=tertiarty_backgroud_colours[2], fg=tertiarty_backgroud_colours[2], relief="solid", borderwidth=1.5, command=background_menu_change3)
 background_change_standard.pack(side="left", padx=10)
 
-
-# Highscore-Screen
-highscore_label = tk.Label(screen_highscores, text="Highscores", font=("Arial", font_size3), bg=screen_colour)
+ 
+# --Highscore-Screen--
+highscore_label = tk.Label(screen_highscores, text="Highscores", font=("Arial", font_size3), bg="#EAE5E3")
 highscore_label.pack(pady=200)
 highscore_back_button = tk.Button(screen_highscores, text="← BACK", font=("Arial", font_size1), command=go_back)
 highscore_back_button.place(x=20, y=20)
 root.bind("<BackSpace>", lambda event: go_back())
+
+
+# --Hilfsfunktionen: Sound--
+
+import winsound
+import time
+
+
+def play_sound_async(sound):
+    threading.Thread(target=play_sound, args=(sound,), daemon=True).start() 
+
+# Angepasste load_sound-Funktion
+def load_sound(name):
+    # Gibt ein Dictionary zurück, das die Frequenz(en) und Dauer(n) des Sounds enthält.
+    if name == "success.wav":  # Win-Sound
+        return {"freq": [880], "dur": [300]}
+    elif name == "failed.wav":  # Fehler-Sound
+        return {"freq": [220], "dur": [300]}
+    elif name == "win.wav":     # Sieg-Melodie (kurze Melodie)
+        return {"freq": [660, 880, 1320], "dur": [150, 150, 150]}
+    elif name == "lost.wav":    # Game Over Sound
+        return {"freq": [330, 220], "dur": [300, 300]}
+    else:
+        return None
+
+# Sounds laden
+SOUND_CORRECT = load_sound("success.wav")
+SOUND_WRONG   = load_sound("failed.wav")
+SOUND_WIN     = load_sound("win.wav")
+SOUND_LOSE    = load_sound("lost.wav")
+
+# Abspiel-Funktion
+def play_sound(sound):
+    if not sound:
+        return
+    try:
+        for f, d in zip(sound["freq"], sound["dur"]):
+            winsound.Beep(f, d)
+            time.sleep(0.05)  # Kurze Pause zwischen den Tönen
+    except Exception as e:
+        print("Play sound error:", e)
+
+# Test
+if __name__ == "__main__":
+    play_sound(SOUND_CORRECT)
+    time.sleep(0.4)
+    play_sound(SOUND_WRONG)
+    time.sleep(0.4)
+    play_sound(SOUND_WIN)
+    time.sleep(1)
+    play_sound(SOUND_LOSE)
 
 
 

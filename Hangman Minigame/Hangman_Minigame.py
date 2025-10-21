@@ -635,6 +635,7 @@ def all_redos():
     btn_links.config(bg=game_colour)
     btn_rechts.config(bg=game_colour)
     canvas.config(bg=game_colour)
+    btn_save_score.config(bg=game_colour)
     keyboard_frame.config(bg=game_colour)  
     for frame in game_row_frames: 
         frame.config(bg=game_colour) 

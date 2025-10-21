@@ -34,6 +34,8 @@ game_colour = standard_background_clours[1]
 screen_colour = standard_background_clours[2]
 
 game_row_frames = []
+erster_loesch_knopf = False
+anzahl_loesch_knöpfe = 0
 
 # ---Window setup---
 def on_escape(event=None):
@@ -786,6 +788,38 @@ highscore_kategorie_label.pack(pady=5)
 highscore_list_frame = tk.Frame(screen_highscores, bg=screen_colour)
 highscore_list_frame.pack(pady=10, fill="both", expand=True)
 
+# --Deleting--
+def delete_highscore():
+    global anzahl_loesch_knöpfe
+
+    current_category = kategorien[kategorie_index]
+    scores_list = highscores.get(current_category, [])
+    anzahl_eintraege = len(scores_list)
+    
+
+    löschen_frame = tk.Frame(
+        screen_highscores, 
+        width=68,    # Feste Breite (z.B. 80 Pixel)
+        height=((27 + 3) * anzahl_eintraege ),  # Feste Höhe (Muss kleiner sein, als was font_size1 erzwingt!)
+        bg="#FF5555" # Hintergrundfarbe anpassen!
+    )
+    löschen_frame.place(x=720, y=209)
+
+    
+    for i in range(anzahl_eintraege):
+        if erster_loesch_knopf != True:
+            löschen_button2 = tk.Button(löschen_frame, text="Löschen", font=("Arial", 12), bg="#FF5555", fg="white")
+            löschen_button2.place(x=-4, y=-5)
+       
+        else:
+            löschen_button2 = tk.Button(löschen_frame, text="Löschen", font=("Arial", 12), bg="#FF5555", fg="white")
+            löschen_button2.place(x=((30 * anzahl_eintrage) -4), y=-5)
+        anzahl_loesch_knöpfe += 1
+        
+
+löschen_button = tk.Button(screen_highscores, text="Lösche Highscore", font=("Arial", font_size1), bg="#FF5555", fg="white", command=delete_highscore)
+löschen_button.place(x=400, y=20)
+
 # -Scrollbarer Bereich für die Highscores-
 canvas_hs = tk.Canvas(highscore_list_frame, bg=screen_colour, highlightthickness=0)
 scrollbar = tk.Scrollbar(highscore_list_frame, orient="vertical", command=canvas_hs.yview)
@@ -890,12 +924,7 @@ def play_sound(sound):
         print("Play sound error:", e)
 
 # -Startup Sound-
-if __name__ == "__main__":
-    play_sound(SOUND_CORRECT)
-    time.sleep(0.4)
-    play_sound(SOUND_WRONG)
-    time.sleep(0.4)
-    play_sound(SOUND_WIN)
+
 
 
 

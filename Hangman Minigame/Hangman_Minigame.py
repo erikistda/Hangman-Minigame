@@ -82,6 +82,7 @@ def show_selection():
     global auswahl_aktiv
 
     # -1. Vorheriges Spiel aufräumen-
+    hide_endgame_buttons()
     btn_retry.place_forget() 
     reset_keyboard() 
     leben = 6
@@ -313,7 +314,7 @@ def check_letter(key):
         stop_timer()
         word_label.config(text=f"Verloren! Das Wort war {geheime_wort}")
         play_sound_async(SOUND_LOSE)
-        threading.Timer(1.0, show_retry_button).start() # Warte 4 Sekunden und zeige dann den Retry Button an
+        threading.Timer(1.0, show_retry_button()).start() # Warte 4 Sekunden und zeige dann den Retry Button an
     elif all(c in erratene_buchstaben for c in geheime_wort):
         stop_timer()
         word_label.config(text="🎉 Gewonnen! Das Wort war " + geheime_wort)
@@ -322,13 +323,12 @@ def check_letter(key):
         global last_time_ms
         last_time_ms = int(elapsed_time * 1000) # Speichern der Zeit in Millisekunden
         show_endgame_buttons()
-
-        # NEU: Speichere den Highscore
+# --Speicherung des Highscores--
+# --Fügt den neuen Score zur globalen Liste hinzu und speichert sie.--
 def save_score(name, time_ms, category):
-    """Fügt den neuen Score zur globalen Liste hinzu und speichert sie."""
     global highscores
     
-    # Sicherstellen, dass die Kategorie existiert
+    # -Sicherstellen, dass die Kategorie existiert-
     if category not in highscores:
         highscores[category] = []
         
@@ -337,22 +337,19 @@ def save_score(name, time_ms, category):
         "time_ms": time_ms
     })
     
-    # Sortiere die Scores (schnellste Zeit (kleinere time_ms) zuerst)
     highscores[category].sort(key=lambda x: x["time_ms"])
+    highscores[category] = highscores[category][:50] # Beschränkung der Nummer an Highscores pro Kategorie
     
-    # Beschränke auf die Top 50
-    highscores[category] = highscores[category][:50]
-    
-    save_highscores(highscores) # Speichern in der Datei
-    update_highscores_display() # Highscore-Liste aktualisieren
+    save_highscores(highscores) 
+    update_highscores_display() 
 
 def show_name_input_popup():
-    """Öffnet ein TopLevel-Fenster zur Eingabe des Namens."""
+    #-Öffnet ein TopLevel-Fenster zur Eingabe des Namens.-
     hide_endgame_buttons() # Buttons im Hintergrund ausblenden
     
     popup = tk.Toplevel(root)
     popup.title("Highscore speichern")
-    # Positioniere das Fenster mittig (einfache Methode)
+    # -Positioniere das Fenster mittig (einfache Methode)-
     window_width = 300
     window_height = 150
     screen_width = root.winfo_screenwidth()
@@ -373,14 +370,12 @@ def show_name_input_popup():
         name = name_entry.get()
         if name:
             current_category = kategorien[kategorie_index]
-            # Speichere den Score und schließe das Fenster
+            # -Speicheren des Scores und schließen des Fensters-
             save_score(name, last_time_ms, current_category)
             popup.destroy()
             
-            # Gehe zum Highscore Screen
-            screen_highscores.tkraise()
+            screen_highscores.tkraise() # Gehe zum Highscore Screen
         else:
-            # Einfache Meldung für leeren Namen
             name_entry.insert(0, "BITTE NAMEN EINGEBEN!")
             
     name_entry.bind("<Return>", submit_score)
@@ -388,7 +383,10 @@ def show_name_input_popup():
     tk.Button(popup, text="Speichern", command=submit_score).pack(pady=10)
      
 
-# (Retry + Save)
+# -(Retry + Save)-
+def show_retry_button():
+    """Platziert nur den Retry Button (z.B. nach dem Verlieren)."""
+    btn_retry.place(relx=0.5, rely=0.53, anchor='center')
 def show_endgame_buttons():
     """Platziert Retry und Save Button über der Tastatur."""
     btn_retry.place(relx=0.45, rely=0.53, anchor='center')
@@ -401,7 +399,7 @@ def hide_endgame_buttons():
 
 # -Themen mit Wörtern-
 themen_woerter = {
-    "Länder": ["AFGHANISTAN", "ÄGYPTEN", "ALBANIEN", "ALGERIEN", "ARGENTINIEN", "ARMENIEN", "AUSTRALIEN", "ÖSTERREICH", "BANGLADESCH", "BELGIEN", "BOLIVIEN", "BRASILIEN", "BULGARIEN", "KANADA", "CHILE", "CHINA", "KOLUMBIEN", "KROATIEN", "TSCHECHISCHE REPUBLIK", "DÄNEMARK", "DOMINIKANISCHE REPUBLIK", "ECUADOR", "ÄTHIOPIEN", "FINNLAND", "FRANKREICH", "GEORGIEN", "DEUTSCHLAND", "GHANA", "GRIECHENLAND", "GUATEMALA", "HAITI", "HONDURAS", "UNGARN", "ISLAND", "INDIEN", "INDONESIEN", "IRAN", "IRAK", "IRLAND", "ISRAEL", "ITALIEN", "JAPAN", "JORDANIEN", "KENIA", "KOREA, NORD", "KOREA, SÜD", "KUWAIT", "LETTLAND", "LIBANON", "LITAUEN", "LUXEMBURG", "MADAGASKAR", "MALAYSIA", "MALI", "MALTA", "MAURITIUS", "MEXIKO", "MOLDAVIEN", "MONGOLEI", "MONTENEGRO", "MAROKKO", "MOSAMBIK", "MYANMAR", "NAMIBIA", "NEPAL", "NIEDERLANDE", "NEUSEELAND", "NICARAGUA", "NIGERIA", "NORWEGEN", "PAKISTAN", "PANAMA", "PARAGUAY", "PERU", "PHILIPPINEN", "POLEN", "PORTUGAL", "KATAR", "RUMÄNIEN", "RUSSLAND", "SAUDI-ARABIEN", "SENEGAL", "SERBIEN", "SINGAPUR", "SLOWAKEI", "SLOWENIEN", "SÜDAFRIKA", "SPANIEN", "SRI LANKA", "SCHWEDEN", "SCHWEIZ", "SYRIEN", "TAIWAN", "THAILAND", "TUNESIEN", "TÜRKEI", "UKRAINE", "VEREINIGTE ARABISCHE EMIRATE", "VEREINIGTES KÖNIGREICH", "USA", "URUGUAY", "VENEZUELA", "VIETNAM", "ZAMBIA", "ZIMBABWE"],
+    "Länder": ["AFGHANISTAN", "ÄGYPTEN", "ALBANIEN", "ALGERIEN", "ARGENTINIEN", "ARMENIEN", "AUSTRALIEN", "ÖSTERREICH", "BANGLADESCH", "BELGIEN", "BOLIVIEN", "BRASILIEN", "BULGARIEN", "KANADA", "CHILE", "CHINA", "KOLUMBIEN", "KROATIEN", "TSCHECHISCHE REPUBLIK", "DÄNEMARK", "DOMINIKANISCHE REPUBLIK", "ECUADOR", "ÄTHIOPIEN", "FINNLAND", "FRANKREICH", "GEORGIEN", "DEUTSCHLAND", "GHANA", "GRIECHENLAND", "GUATEMALA", "HAITI", "HONDURAS", "UNGARN", "ISLAND", "INDIEN", "INDONESIEN", "IRAN", "IRAK", "IRLAND", "ISRAEL", "ITALIEN", "JAPAN", "JORDANIEN", "KENIA", "NORDKOREA", "SÜDKOREA", "KUWAIT", "LETTLAND", "LIBANON", "LITAUEN", "LUXEMBURG", "MADAGASKAR", "MALAYSIA", "MALI", "MALTA", "MAURITIUS", "MEXIKO", "MOLDAVIEN", "MONGOLEI", "MONTENEGRO", "MAROKKO", "MOSAMBIK", "MYANMAR", "NAMIBIA", "NEPAL", "NIEDERLANDE", "NEUSEELAND", "NICARAGUA", "NIGERIA", "NORWEGEN", "PAKISTAN", "PANAMA", "PARAGUAY", "PERU", "PHILIPPINEN", "POLEN", "PORTUGAL", "KATAR", "RUMÄNIEN", "RUSSLAND", "SAUDI ARABIEN", "SENEGAL", "SERBIEN", "SINGAPUR", "SLOWAKEI", "SLOWENIEN", "SÜDAFRIKA", "SPANIEN", "SRI LANKA", "SCHWEDEN", "SCHWEIZ", "SYRIEN", "TAIWAN", "THAILAND", "TUNESIEN", "TÜRKEI", "UKRAINE", "VEREINIGTE ARABISCHE EMIRATE", "VEREINIGTES KÖNIGREICH", "USA", "URUGUAY", "VENEZUELA", "VIETNAM", "ZAMBIA", "ZIMBABWE"],
     "Hauptstädte": ["BERLIN", "PARIS", "LONDON", "ROM", "MADRID", "OTTAWA", "MOSKAU", "PEKING", "TOKIO", "SEOUL", "BRASILIA", "BUENOSAIRES", "MEXIKOSTADT", "CANBERRA", "WIEN", "AMSTERDAM", "BRÜSSEL", "STOCKHOLM", "OSLO", "KOPENHAGEN", "HELSINKI", "WARSCHAU", "PRAG", "BUDAPEST", "ATHEN", "ANKARA", "JERUSALEM", "RIAD", "KAIRO", "BANGKOK", "DELHI", "ISLAMABAD", "JAKARTA", "MANILA", "HANOI", "SINGAPUR", "ABUDHABI", "DOHA", "TEHERAN", "BAGDAD", "DAMASKUS", "KABUL", "RABAT", "ALGIER", "TUNIS", "PRETORIA", "NAIROBI", "VILNIUS", "TALLINN", "BERN"],
     "Tiere": ["HUND", "KATZE", "PFERD", "KUH", "SCHWEIN", "SCHAF", "ZIEGE", "HASE", "KANINCHEN", "HAMSTER", "MAUS", "RATTE", "MEERSCHWEINCHEN", "FUCHS", "WOLF", "BÄR", "LÖWE", "TIGER", "LEOPARD", "GEPARD", "ELEFANT", "NASHORN", "FLUSSPFERD", "AFFE", "GORILLA", "SCHIMPANSE", "ORANGUTAN", "GIRAFFE", "ZEBRA", "KROKODIL", "ALLIGATOR", "SCHILDKRÖTE", "ECHSE", "SCHLANGE", "PYTHON", "KOBRA", "IGEL", "MAULWURF", "REH", "HIRSCH", "ELCH", "WILDSCHWEIN", "DACH", "MARDER", "WIESEL", "OTTER", "SEEHUND", "WALROSS", "DELFIN", "WAL", "HAI", "ROCHEN", "FISCH", "FORELLE", "LACHS", "KARPEN", "HECHT", "STÖR", "SPATZ", "AMSEL", "MEISE", "TAUBE", "ENTE", "GANS", "SCHWAN", "ADLER", "FALKE", "GEIER", "EULE", "PAPAGEI", "WELLENSITTICH", "KANARIE", "HÜHNER", "HAHN", "HENNE", "TRUTHAN", "STRAUSS", "PFAU", "KÄFER", "AMEISE", "BIENE", "WESPE", "FLIEGE", "MÜCKE", "LIBELLE", "SCHMETTERLING", "SPINNE", "SKORPION", "KREBS", "HUMMER", "QUALLE", "SEESTERN", "SEEPFERDCHEN", "OCTOPUS", "TINTENFISCH", "MUSCHEL", "SCHNECKE", "ALPAKA", "LAMA", "YAK", "REGENWURM"],
     "Informatik": ["ALGORITHMUS", "ANWENDUNG", "ARRAY", "ARBEITSSPEICHER", "BACKEND", "BROWSER", "CACHE", "CLOUD", "CODE", "COMPUTER", "CPU", "DATEN", "DATENBANK", "DEBUGGING", "DEKODIERUNG", "DESIGN", "DIGITAL", "DOMAIN", "DOWNLOAD", "EINGABE", "ENCRYPTION", "ETHERNET", "FESTPLATTE", "FIREWALL", "FIRMWARE", "FORMAT", "FRAMEWORK", "FUNKTION", "GATEWAY", "GRAFIK", "HARDWARE", "HOSTING", "INDEX", "INFRASTRUKTUR", "INPUT", "INSTALLATION", "INTERNET", "IPADRESSE", "JAVA", "JAVASCRIPT", "KERNEL", "KEYBOARD", "KOMPILER", "KONFIGURATION", "KONTROLLE", "LAPTOP", "LINUX", "LOGIN", "LOGIK", "MAINFRAME", "MAINBOARD", "MALWARE", "MEMORY", "MODEM", "MONITOR", "NETZWERK", "OBJEKT", "OPENSOURCE", "OPTIMIERUNG", "OUTPUT", "PAKET", "PASSWORT", "PATCH", "PIXEL", "PLATTFORM", "PORTAL", "PROTOKOLL", "PROZESS", "PROZESSOR", "PROGRAMM", "PROGRAMMIERUNG", "RECHNER", "RECHTE", "ROUTER", "SCRIPT", "SERVER", "SOFTWARE", "SOURCECODE", "SPEICHER", "STRUKTUR", "SYNTAX", "SYSTEM", "TABLET", "TERMINAL", "TOOL", "UPLOAD", "URLADRESSE", "USERID", "VARIABLE", "VIRUS", "VIRTUALISIERUNG", "VPN", "WEBSITE", "WINDOWS", "WORKFLOW", "ZUGRIFF", "ZERTIFIKAT", "ZUSAMMENFÜHRUNG", "ZUWEISUNG", "ZWISCHENSPEICHER"],
@@ -416,28 +414,23 @@ erratene_buchstaben = set()
 leben = 6
 hangman_parts = []
 
-# Globale Timer-Variablen
+# -Globale Timer-Variablen-
 timer_running = False
 timer_start_time = 0.0
-timer_job = None # Für die root.after-Funktion
-last_time_ms = 0 # NEU: Für das Speichern der letzten Spielzeit
-# Label für die Timer-Anzeige
+timer_job = None 
+last_time_ms = 0
+# -Label für die Timer-Anzeige-
 timer_label = tk.Label(screen_game, text="00:00:000", font=("Arial", font_size3), bg=game_colour)
-# Retry Button
-# Unicode-Symbol für Wiederholen: 🔄 (U+1F504)
+# -Retry Button-
 btn_retry = tk.Button(screen_game, text="🔄", font=("Arial", font_size5),
                      command=show_selection,
-                     bg=game_colour, fg="#333333", # fg ist die Schriftfarbe (dunkelgrau)
+                     bg=game_colour, fg="#333333", 
                      relief="raised", bd=3)
-# NEU: Save Highscore Button
+# -Save Highscore Button-
 btn_save_score = tk.Button(screen_game, text="💾", font=("Arial", font_size5),
                            command=show_name_input_popup,
                            bg=game_colour, fg="#333333",
                            relief="raised", bd=3)
-
-# ... (weiterer Code für auswahl_frame)
-
-
 # --Frame für Auswahl--
 auswahl_frame = tk.Frame(screen_game, bg="#AAC1D2")
 auswahl_frame.pack(expand=True)
@@ -613,17 +606,21 @@ def all_redos():
     global screen_colour, menu_colour, game_colour, standard_background_clours, canvas
     # -Other Screens-
     screen_settings.config(bg=screen_colour)
-    screen_highscores.config(bg=screen_colour)
-    size_button_identifier.config(bg=screen_colour)
     settings_label.config(bg=screen_colour)
+    size_button_identifier.config(bg=screen_colour)
     size_control_frame.config(bg=screen_colour)
     background_control_frame1.config(bg=screen_colour)
-    highscore_label.config(bg=screen_colour)
     background_control_frame2.config(bg=screen_colour)
     background_control_frame3.config(bg=screen_colour)
     background_titel1.config(bg=screen_colour)
     background_titel2.config(bg=screen_colour)
     background_titel3.config(bg=screen_colour)
+    screen_highscores.config(bg=screen_colour)
+    highscore_label.config(bg=screen_colour)
+    highscore_control_frame.config(bg=screen_colour)
+    highscore_kategorie_label.config(bg=screen_colour)
+    highscore_list_frame.config(bg=screen_colour)
+    canvas_hs.config(bg=screen_colour)
     # -Menu Screen-
     screen_menu.config(bg=menu_colour)
     menu_canvas.config(bg=menu_colour)
@@ -638,6 +635,7 @@ def all_redos():
     btn_links.config(bg=game_colour)
     btn_rechts.config(bg=game_colour)
     canvas.config(bg=game_colour)
+    btn_save_score.config(bg=game_colour)
     keyboard_frame.config(bg=game_colour)  
     for frame in game_row_frames: 
         frame.config(bg=game_colour) 
@@ -755,23 +753,22 @@ def load_highscores():
     if os.path.exists(HIGHSCORE_FILE):
         with open(HIGHSCORE_FILE, 'r') as f:
             try:
-                # Highscores nach Kategorie: {"Länder": [...], "Tiere": [...]}
                 return json.load(f)
             except json.JSONDecodeError:
-                # Falls die Datei leer oder korrupt ist
+                # -Falls die Datei leer oder korrupt ist-
                 return {k: [] for k in themen_woerter.keys()}
     return {k: [] for k in themen_woerter.keys()}
 
+#Speichert Highscores in der JSON-Datei.
 def save_highscores(scores):
-    """Speichert Highscores in der JSON-Datei."""
     with open(HIGHSCORE_FILE, 'w') as f:
         json.dump(scores, f, indent=4)
 
-# Globale Variable für Highscores initialisieren
+# -Globale Variable für Highscores initialisieren-
 highscores = load_highscores()
 
 
-# Container für die Steuerelemente (Kategorieauswahl)
+# -Container für die Steuerelemente (Kategorieauswahl)-
 highscore_control_frame = tk.Frame(screen_highscores, bg=screen_colour)
 highscore_control_frame.pack(pady=20)
 
@@ -781,15 +778,15 @@ highscore_label.pack(side="top", pady=10)
 highscore_back_button = tk.Button(screen_highscores, text="← BACK", font=("Arial", font_size1), command=go_back)
 highscore_back_button.place(x=20, y=20)
 
-# NEU: Label für die aktuelle Kategorieanzeige im Highscore-Screen
+# -Label für die aktuelle Kategorieanzeige im Highscore-Screen-
 highscore_kategorie_label = tk.Label(highscore_control_frame, text="Kategorie: Länder", font=("Arial", font_size2), bg=screen_colour)
 highscore_kategorie_label.pack(pady=5)
 
-# NEU: Rahmen für die eigentliche Highscore-Liste
+# -Rahmen für die eigentliche Highscore-Liste-
 highscore_list_frame = tk.Frame(screen_highscores, bg=screen_colour)
 highscore_list_frame.pack(pady=10, fill="both", expand=True)
 
-# NEU: Scrollbarer Bereich für die Highscores
+# -Scrollbarer Bereich für die Highscores-
 canvas_hs = tk.Canvas(highscore_list_frame, bg=screen_colour, highlightthickness=0)
 scrollbar = tk.Scrollbar(highscore_list_frame, orient="vertical", command=canvas_hs.yview)
 scrollable_frame = tk.Frame(canvas_hs, bg=screen_colour)
@@ -804,36 +801,36 @@ scrollable_frame.bind(
 canvas_hs.create_window((0, 0), window=scrollable_frame, anchor="nw")
 canvas_hs.configure(yscrollcommand=scrollbar.set)
 
-# Platziere Canvas und Scrollbar
+# -Platziere Canvas und Scrollbar-
 scrollbar.pack(side="right", fill="y")
 canvas_hs.pack(side="left", fill="both", expand=True, padx=20)
 
 
-# Funktion, um die Anzeige zu aktualisieren
+# --Funktion, um die Anzeige zu aktualisieren--
 def update_highscores_display():
     """Löscht die aktuelle Liste und baut die Top 50 der aktuellen Kategorie neu auf."""
     
-    # 1. Alte Widgets löschen
+    # -1. Alte Widgets löschen-
     for widget in scrollable_frame.winfo_children():
         widget.destroy()
 
-    # 2. Kategorie setzen
+    # -2. Kategorie setzen-
     current_category = kategorien[kategorie_index] # Nutzt die aktuell gewählte Spiel-Kategorie
     highscore_kategorie_label.config(text=f"Kategorie: {current_category}")
     
     scores = highscores.get(current_category, [])
 
-    # Kopfzeile
+    # -Kopfzeile-
     tk.Label(scrollable_frame, text="Platz", font=("Courier", font_size2, "bold"), bg=screen_colour, width=5).grid(row=0, column=0, padx=5, pady=5)
     tk.Label(scrollable_frame, text="Name", font=("Courier", font_size2, "bold"), bg=screen_colour, width=20, anchor="w").grid(row=0, column=1, padx=5, pady=5)
     tk.Label(scrollable_frame, text="Zeit (mm:ss:ms)", font=("Courier", font_size2, "bold"), bg=screen_colour, width=15).grid(row=0, column=2, padx=5, pady=5)
     
-    # 3. Scores anzeigen
+    # --3. Scores anzeigen--
     for rank, score in enumerate(scores):
         name = score['name']
         time_ms = score['time_ms']
         
-        # Zeit formatieren (mm:ss:ms)
+        # -Zeit formatieren (mm:ss:ms)-
         total_seconds = time_ms / 1000
         minutes = int(total_seconds // 60)
         seconds = int(total_seconds % 60)
@@ -842,25 +839,19 @@ def update_highscores_display():
         
         row_num = rank + 1
         
-        # Hintergrundfarbe abwechseln
+        # -Hintergrundfarbe abwechseln-
         bg_color = "#F0F0F0" if row_num % 2 == 0 else "white"
         
         tk.Label(scrollable_frame, text=f"{row_num}.", font=("Courier", font_size1), bg=bg_color, width=5).grid(row=row_num, column=0, padx=5, pady=2, sticky="ew")
         tk.Label(scrollable_frame, text=name, font=("Courier", font_size1), bg=bg_color, width=20, anchor="w").grid(row=row_num, column=1, padx=5, pady=2, sticky="ew")
         tk.Label(scrollable_frame, text=time_str, font=("Courier", font_size1), bg=bg_color, width=15).grid(row=row_num, column=2, padx=5, pady=2, sticky="ew")
         
-        # Wichtig: Die Hintergrundfarbe der Labels muss bei Farbwechseln im Settings-Screen mitgeändert werden. 
-        # Da dies komplex ist, verwenden wir hier feste Farben.
-
-# Überschreibe die `go_back` Funktion (ca. Zeile 50) um Highscores zu aktualisieren
-# Ich habe das bereits oben unter Punkt 4 abgedeckt.
-        
-# NEU: Wenn der Highscore-Screen angezeigt wird, soll die Liste aktualisiert werden
+# --Aktualisierung der Anzeige beim Öffnen des Highscore-Screens--
 def show_highscores_screen():
     update_highscores_display()
     screen_highscores.tkraise()
 
-# 4. Ersetze den alten Command des Highscore-Buttons (im Menü, ca. Zeile 163)
+# -4. Ersetze den alten Command des Highscore-Buttons (im Menü, ca. Zeile 163)-
 btn_highscores.config(command=show_highscores_screen)
 
 

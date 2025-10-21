@@ -212,7 +212,10 @@ def draw_hangman_stage():
         parts[index]()
 
 def update_word_display():
-    display = " ".join([c if c in erratene_buchstaben else "_" for c in geheime_wort])
+    display = " ".join([
+        c if (c in erratene_buchstaben or c in [" ", "-", ","]) else "_"
+        for c in geheime_wort
+    ])
     word_label.config(text=display)
 
 
@@ -304,12 +307,14 @@ def check_letter(key):
         word_label.config(text=f"Verloren! Das Wort war {geheime_wort}")
         play_sound_async(SOUND_LOSE)
         # Warte 4 Sekunden und zeige dann den Retry Button an
-        threading.Timer(4.0, show_retry_button).start()
+        threading.Timer(1.0, show_retry_button).start()
     elif all(c in erratene_buchstaben for c in geheime_wort):
         stop_timer()
-        word_label.config(text="🎉 Gewonnen!")
+        word_label.config(text="🎉 Gewonnen! Das Wort war "+geheime_wort)
         play_sound_async(SOUND_WIN)
-
+        elapsed_time = time.time() - timer_start_time
+        time_ms = int(elapsed_time * 1000)
+     
 
 # Retry anzeigen
 def show_retry_button():
@@ -416,6 +421,7 @@ def start_game(event=None):
     
     geheime_wort = random.choice(themen_woerter[kategorien[kategorie_index]])
     erratene_buchstaben = set()
+    erratene_buchstaben.update(" ")
     leben = 6
 
     update_word_display()

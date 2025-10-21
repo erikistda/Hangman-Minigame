@@ -1,18 +1,20 @@
 from importlib import reload
 import tkinter as tk
 import string
-from tkinter import font
-from turtle import back
 import json
 import pygame
 import os
 import threading
-import time                                                                     # NEU
+import time
+import winsound
+from tkinter import font
+from turtle import back
+from importlib import reload
 
 SOUNDS_DIR = os.path.join(os.path.dirname(__file__), "Sounds")
 
 pygame.mixer.init()
-# Settings
+# --Settings--
 font_sizes_standard = [14,20,24,28,40,60]
 font_sizes_big = [18, 26, 31, 36, 52, 78]
 font_sizes_small = [11, 16, 19, 22, 32, 48]
@@ -33,7 +35,7 @@ screen_colour = standard_background_clours[2]
 
 game_row_frames = []
 
-# Window setup
+# ---Window setup---
 def on_escape(event=None):
     root.destroy()
 root = tk.Tk() 
@@ -43,8 +45,7 @@ root.configure(bg=menu_colour)
 root.bind_all("<Escape>",on_escape)
 root.resizable(False,False)
 
-#Screens
-
+#--Screens--
 screen_menu = tk.Frame(root,bg=menu_colour)
 screen_game = tk.Frame(root,bg=game_colour)
 screen_settings = tk.Frame(root,bg=screen_colour)
@@ -53,18 +54,15 @@ screen_highscores = tk.Frame(root,bg=screen_colour)
 for frame in (screen_menu,screen_game,screen_settings,screen_highscores):
     frame.place(relwidth=1,relheight=1)
 
-#Zurück Funkrion
-def go_back():
-    global auswahl_aktiv
-    # NEUE FUNKTION: Auswahl anzeigen (Neues Spiel starten)
+#--Zurück Funktion--
 def go_back():
     global auswahl_aktiv,leben
     
-    # 1. Timer stoppen und ausblenden
+    # -1. Timer stoppen und ausblenden-
     stop_timer() 
     timer_label.place_forget()
     
-    # 2. Spielzustand zurücksetzen und Auswahl wiederherstellen
+    # -2. Spielzustand zurücksetzen und Auswahl wiederherstellen-
     auswahl_frame.place(relx=0.5, rely=0.55, anchor="center") 
     auswahl_aktiv = True 
     leben = 6
@@ -72,18 +70,17 @@ def go_back():
     word_label.config(text="")
     canvas.delete("all")
     
-    # 3. Oberfläche aufräumen
+    # -3. Oberfläche aufräumen-
     reset_keyboard()
     
-    # Zurück zum Hauptmenü
+    # -Zurück zum Hauptmenü-
     screen_menu.tkraise()
 
-# NEUE FUNKTION: Auswahl anzeigen (Neues Spiel starten)
+    #--Zeigt den Game Screen und die Themenauswahl an, um ein neues Spiel zu starten.--
 def show_selection():
-    """Zeigt den Game Screen und die Themenauswahl an, um ein neues Spiel zu starten."""
     global auswahl_aktiv
-    
-    # 1. Vorheriges Spiel aufräumen
+
+    # -1. Vorheriges Spiel aufräumen-
     btn_retry.place_forget() 
     reset_keyboard() 
     leben = 6
@@ -92,19 +89,19 @@ def show_selection():
     hearts_label.pack_forget()
     canvas.delete("all")
     
-    # 2. Auswahl-Frame platzieren und Zustand setzen
+    # -2. Auswahl-Frame platzieren und Zustand setzen-
     auswahl_frame.place(relx=0.5, rely=0.55, anchor="center")
     auswahl_aktiv = True
     
-    # 3. Zum Spielbildschirm wechseln
+    # -3. Zum Spielbildschirm wechseln-
     screen_game.tkraise()
 
-#Menu
-# Hangman-Logo im Menü
+#---Menu---
+# -Hangman-Logo im Menü-
 menu_canvas = tk.Canvas(screen_menu, width=800, height=300, bg=menu_colour, highlightthickness=0)
 menu_canvas.pack(pady=50)
 
-# HÄNGE-Text (fett und unterstrichen)
+# -HÄNGE-Text (fett und unterstrichen)-
 menu_canvas.create_text(
     400, 100,
     text="HÄNGE",
@@ -112,15 +109,15 @@ menu_canvas.create_text(
     fill="white"
 )
 
-# Position der Unterstreichung unter dem N
+# -Position der Unterstreichung unter dem N-
 x_n = 400 + 55   # leicht angepasst, damit es wirklich am N ist
 y_underline = 100 + 40  # etwas unterhalb der Buchstaben
 
-# Seil (weiss)
+# -Seil-
 y_seil_end = 175
 menu_canvas.create_line(x_n, y_underline, x_n, y_seil_end, fill="white", width=2)
 
-# Kopf (leicht geneigt, etwas nach rechts)
+# --Kopf--
 kopf_radius = 15
 menu_canvas.create_oval(
     x_n - kopf_radius + 7,
@@ -130,7 +127,7 @@ menu_canvas.create_oval(
     fill="black"
 )
 
-# Körper
+# --Körper--
 körper_länge = 40
 menu_canvas.create_line(
     x_n + 3,
@@ -141,7 +138,7 @@ menu_canvas.create_line(
     width=2
 )
 
-# Arme
+# --Arme--
 menu_canvas.create_line(
     x_n + 3, y_seil_end + 2*kopf_radius + 10,
     x_n - 10, y_seil_end + 2*kopf_radius + 25,
@@ -153,7 +150,7 @@ menu_canvas.create_line(
     fill="black", width=2
 )
 
-# Beine
+# --Beine--
 menu_canvas.create_line(
     x_n + 3, y_seil_end + 2*kopf_radius + körper_länge,
     x_n - 10, y_seil_end + 2*kopf_radius + körper_länge + 30,
@@ -181,18 +178,18 @@ btn_beenden=tk.Button(screen_menu,text="EXIT",font=("Arial",font_size2),width=15
                       command=root.destroy)
 btn_beenden.pack(pady=10)
 
-# PLAY-Screen
+# ----PLAY-Screen----
 import random
 
-# --- Aufbau des Screens ---
+# ---Aufbau des Screens---
 screen_game.configure(bg="#AAC1D2")
-# Zeichenfläche für Hangman 
+# -Zeichenfläche für Hangman-
 canvas = tk.Canvas(screen_game, width=400, height=300, bg="#AAC1D2", highlightthickness=0)
 canvas.pack(pady=20)
 
 def draw_gallows():
     canvas.delete("all")
-    # Gerüst
+    # -Gerüst-
     canvas.create_line(100, 250, 300, 250, width=4)
     canvas.create_line(150, 250, 150, 50, width=4)
     canvas.create_line(150, 50, 250, 50, width=4)
@@ -228,17 +225,17 @@ hearts_label = tk.Label(screen_game, text="", font=("Arial", font_size2), bg="#A
 def update_hearts():
     hearts_label.config(text="❤️ " * leben)
 
-# --- NEUE TIMER-FUNKTIONEN ---
+
+# --Timer variablen und Funktion--
 def stop_timer():
-    """Stoppt den Timer und bricht die nächste geplante Aktualisierung ab."""
     global timer_running, timer_job
+    # -Stoppt den Timer und bricht die nächste geplante Aktualisierung ab.-
     timer_running = False
     if timer_job:
         root.after_cancel(timer_job)
         timer_job = None
         
 def update_timer():
-    """Berechnet die verstrichene Zeit und aktualisiert das Label."""               #NEU
     global timer_job, timer_start_time, timer_running
     
     if not timer_running:
@@ -248,23 +245,29 @@ def update_timer():
     
     minutes = int(elapsed_time // 60)
     seconds = int(elapsed_time % 60)
-    # Millisekunden: Differenz zur vollen Sekunde, multipliziert mit 1000
+    # -Millisekunden: Differenz zur vollen Sekunde, multipliziert mit 1000-
     milliseconds = int((elapsed_time - int(elapsed_time)) * 1000)
     
-    # Formatierung: MM:SS:mmm
+    # -Formatierung: MM:SS:mmm-
     timer_display = f"{minutes:02d}:{seconds:02d}:{milliseconds:03d}"
     timer_label.config(text=timer_display)
     
-    # Aktualisiere in 50 Millisekunden (20 Mal pro Sekunde)
-    timer_job = root.after(50, update_timer)
-#  ENDE NEUE TIMER-FUNKTIONEN
+    timer_job = root.after(50, update_timer) # Aktualisiere in 50 Millisekunden (20 Mal pro Sekunde)
+
+# -Globale Timer-Variablen-
+timer_running = False
+timer_start_time = 0.0
+timer_job = None # Für die root.after-Funktion
+timer_label = tk.Label(screen_game, text="00:00:000", font=("Arial", font_size3), bg=game_colour) # Label für die Timer-Anzeige  
+
+
+# -Setzt die Hintergrundfarbe aller Tasten auf Weiß zurück-
 def reset_keyboard():
-    """Setzt die Hintergrundfarbe aller Tasten auf Weiß zurück."""
     global keys
     for key in keys.values():
         key.config(bg="white")
 
-# Tastatur 
+# --Tastatur--
 keyboard_frame = tk.Frame(screen_game, bg="#AAC1D2")
 keyboard_frame.pack(side="bottom", pady=50)
 
@@ -272,6 +275,7 @@ keys = {}
 letters = list("QWERTZUIOPÜASDFGHJKLÖÄYXCVBNM")
 layout = ["QWERTZUIOPÜ", "ASDFGHJKLÖÄ", "YXCVBNM"]
 
+# -Erstellt die Reihen der Tastatur-
 for row in layout:
     row_frame = tk.Frame(keyboard_frame, bg="#AAC1D2")
     row_frame.pack()
@@ -282,6 +286,7 @@ for row in layout:
         lbl.pack(side="left", padx=3, pady=3)
         keys[char] = lbl
 
+# -- Buchstaben überprüfen --
 def check_letter(key):
     global leben
     if not geheime_wort or leben <= 0:
@@ -290,6 +295,7 @@ def check_letter(key):
         return
     erratene_buchstaben.add(key)
 
+    # -Richtiger oder falscher Buchstabe-
     if key in geheime_wort:
         keys[key].config(bg="#9fff9f")
         play_sound_async(SOUND_CORRECT)
@@ -301,27 +307,25 @@ def check_letter(key):
         update_hearts()
     update_word_display()
 
-    # gewonnen oder verloren
+    # -gewonnen oder verloren-
     if leben == 0:
         stop_timer()
         word_label.config(text=f"Verloren! Das Wort war {geheime_wort}")
         play_sound_async(SOUND_LOSE)
-        # Warte 4 Sekunden und zeige dann den Retry Button an
-        threading.Timer(1.0, show_retry_button).start()
+        threading.Timer(1.0, show_retry_button).start() # Warte 4 Sekunden und zeige dann den Retry Button an
     elif all(c in erratene_buchstaben for c in geheime_wort):
         stop_timer()
-        word_label.config(text="🎉 Gewonnen! Das Wort war "+geheime_wort)
+        word_label.config(text="🎉 Gewonnen! Das Wort war " + geheime_wort)
         play_sound_async(SOUND_WIN)
         elapsed_time = time.time() - timer_start_time
         time_ms = int(elapsed_time * 1000)
      
 
-# Retry anzeigen
+# -Retry anzeigen-
 def show_retry_button():
-    """Platziert den Retry Button über der Tastatur (wo die Themenauswahl war)."""
     btn_retry.place(relx=0.5, rely=0.53, anchor='center')
 
-# Themen mit Wörtern
+# -Themen mit Wörtern-
 themen_woerter = {
     "Länder": ["AFGHANISTAN", "ÄGYPTEN", "ALBANIEN", "ALGERIEN", "ARGENTINIEN", "ARMENIEN", "AUSTRALIEN", "ÖSTERREICH", "BANGLADESCH", "BELGIEN", "BOLIVIEN", "BRASILIEN", "BULGARIEN", "KANADA", "CHILE", "CHINA", "KOLUMBIEN", "KROATIEN", "TSCHECHISCHE REPUBLIK", "DÄNEMARK", "DOMINIKANISCHE REPUBLIK", "ECUADOR", "ÄTHIOPIEN", "FINNLAND", "FRANKREICH", "GEORGIEN", "DEUTSCHLAND", "GHANA", "GRIECHENLAND", "GUATEMALA", "HAITI", "HONDURAS", "UNGARN", "ISLAND", "INDIEN", "INDONESIEN", "IRAN", "IRAK", "IRLAND", "ISRAEL", "ITALIEN", "JAPAN", "JORDANIEN", "KENIA", "KOREA, NORD", "KOREA, SÜD", "KUWAIT", "LETTLAND", "LIBANON", "LITAUEN", "LUXEMBURG", "MADAGASKAR", "MALAYSIA", "MALI", "MALTA", "MAURITIUS", "MEXIKO", "MOLDAVIEN", "MONGOLEI", "MONTENEGRO", "MAROKKO", "MOSAMBIK", "MYANMAR", "NAMIBIA", "NEPAL", "NIEDERLANDE", "NEUSEELAND", "NICARAGUA", "NIGERIA", "NORWEGEN", "PAKISTAN", "PANAMA", "PARAGUAY", "PERU", "PHILIPPINEN", "POLEN", "PORTUGAL", "KATAR", "RUMÄNIEN", "RUSSLAND", "SAUDI-ARABIEN", "SENEGAL", "SERBIEN", "SINGAPUR", "SLOWAKEI", "SLOWENIEN", "SÜDAFRIKA", "SPANIEN", "SRI LANKA", "SCHWEDEN", "SCHWEIZ", "SYRIEN", "TAIWAN", "THAILAND", "TUNESIEN", "TÜRKEI", "UKRAINE", "VEREINIGTE ARABISCHE EMIRATE", "VEREINIGTES KÖNIGREICH", "USA", "URUGUAY", "VENEZUELA", "VIETNAM", "ZAMBIA", "ZIMBABWE"],
     "Hauptstädte": ["BERLIN", "PARIS", "LONDON", "ROM", "MADRID", "OTTAWA", "MOSKAU", "PEKING", "TOKIO", "SEOUL", "BRASILIA", "BUENOSAIRES", "MEXIKOSTADT", "CANBERRA", "WIEN", "AMSTERDAM", "BRÜSSEL", "STOCKHOLM", "OSLO", "KOPENHAGEN", "HELSINKI", "WARSCHAU", "PRAG", "BUDAPEST", "ATHEN", "ANKARA", "JERUSALEM", "RIAD", "KAIRO", "BANGKOK", "DELHI", "ISLAMABAD", "JAKARTA", "MANILA", "HANOI", "SINGAPUR", "ABUDHABI", "DOHA", "TEHERAN", "BAGDAD", "DAMASKUS", "KABUL", "RABAT", "ALGIER", "TUNIS", "PRETORIA", "NAIROBI", "VILNIUS", "TALLINN", "BERN"],
@@ -338,25 +342,18 @@ erratene_buchstaben = set()
 leben = 6
 hangman_parts = []
 
-# Globale Timer-Variablen                                           # NEU:
-timer_running = False
-timer_start_time = 0.0
-timer_job = None # Für die root.after-Funktion
-# Label für die Timer-Anzeige                                       # NEU: 
-timer_label = tk.Label(screen_game, text="00:00:000", font=("Arial", font_size3), bg=game_colour)
-# Retry Button 
-# Unicode-Symbol für Wiederholen: 🔄 (U+1F504)
+
+# -Retry Button-
 btn_retry = tk.Button(screen_game, text="🔄", font=("Arial", font_size5),
                       command=show_selection,
-                      bg=game_colour, fg="#333333", # fg ist die Schriftfarbe (dunkelgrau)
+                      bg=game_colour, fg="#333333", 
                       relief="raised", bd=3)
 
 
-# Frame für Auswahl
+# --Frame für Auswahl--
 auswahl_frame = tk.Frame(screen_game, bg="#AAC1D2")
 auswahl_frame.pack(expand=True)
 auswahl_frame.place(relx=0.5, rely=0.55, anchor="center")
-
 
 kategorien = list(themen_woerter.keys())
 
@@ -371,7 +368,7 @@ auswahl_label.grid(row=0, column=1)
 btn_rechts = tk.Label(auswahl_frame, text="▶", font=("Arial", font_size5), bg="#AAC1D2", cursor="hand2")
 btn_rechts.grid(row=0, column=2, padx=40)
 
-# --- Funktionen ---
+# --Funktionen für Themenauswahl--
 def update_kategorie():
     auswahl_label.config(text=kategorien[kategorie_index])
 
@@ -387,37 +384,30 @@ def prev_kategorie(event=None):
     kategorie_index = (kategorie_index - 1) % len(kategorien)
     update_kategorie()
 
-# Spiel starten   
+# ---Spiel starten---
 
+# -Retry button2-
 def handle_enter(event):
-    """
-    Behandelt den Tastendruck 'Enter'.
-    Startet Spiel bei Auswahl ODER klickt den Retry-Button.
-    """
     global auswahl_aktiv
-    
-    # NEU: Prüfen, ob der Retry-Button sichtbar ist (d.h. Spiel ist beendet)
-    # Wenn ein Spiel vorbei ist, ist die Auswahl nicht aktiv, aber der Retry-Button sichtbar.
     if btn_retry.winfo_ismapped():
-        # Führt den Befehl des Retry-Buttons aus (was show_selection() ist)
         show_selection()
         return
 
-    # Wenn die Auswahl aktiv ist (normaler Start)
     if auswahl_aktiv:
-        start_game()                                                 #NEU
+        start_game()
+
+# --Spiel Start--
 def start_game(event=None):
     global geheime_wort, erratene_buchstaben, leben, auswahl_aktiv, timer_start_time, timer_running
-    
     
     auswahl_aktiv = False
     auswahl_frame.place_forget()
     
-    # Timer starten und anzeigen
+    # -Timer starten und anzeigen-
     timer_start_time = time.time()
     timer_running = True
     update_timer()
-    timer_label.place(relx=1.0, rely=0.0, x=-20, y=20, anchor='ne') # Zeigt den Timer unter dem 'BACK'-Button an
+    timer_label.place(relx=1.0, rely=0.0, x=-20, y=20, anchor='ne') # Zeigt den Timer unter dem back-Button an
     
     geheime_wort = random.choice(themen_woerter[kategorien[kategorie_index]])
     erratene_buchstaben = set()
@@ -430,11 +420,11 @@ def start_game(event=None):
     update_hearts()
 
 
-# Tastatursteuerung 
+# --Tastatursteuerung--
 umlaut_map = {"adiaeresis": "Ä", "odiaeresis": "Ö", "udiaeresis": "Ü"}
 
 def on_key_press(event):
-    if auswahl_aktiv:  # deaktiviert, wenn Thema nicht gewählt
+    if auswahl_aktiv:  # deaktiviert, wenn kein Thema gewählt
         return
     key = event.keysym.upper()
     if key.lower() in umlaut_map:
@@ -444,7 +434,7 @@ def on_key_press(event):
 
 root.bind("<KeyPress>", on_key_press)
 
-# Maus und Tastatur Navigation für Menü
+# -Maus und Tastatur Navigation für Menü-
 btn_links.bind("<Button-1>", prev_kategorie)
 btn_rechts.bind("<Button-1>", next_kategorie)
 auswahl_label.bind("<Button-1>", start_game)
@@ -453,13 +443,13 @@ root.bind("<Right>", next_kategorie)
 root.bind("<Return>", handle_enter)
 
 
-# --SETTINGS-Screen--
+# ---SETTINGS-Screen---
 settings_label = tk.Label(screen_settings, text="Einstellungen", font=("Arial", font_size3), bg=screen_colour)
 settings_label.pack(pady=50)
 settings_back_button = tk.Button(screen_settings, text="← BACK", font=("Arial", font_size1), command=go_back)
 settings_back_button.place(x=20, y=20)
 
-# Size Controll
+# --Size Controll--
 def change_text_size():
     global font_size1, font_size2, font_size3, font_size4, font_size5, font_size6, font_sizes_small, font_sizes_standard, font_sizes_big, current_font_size
     if current_font_size == "Standard":
@@ -488,39 +478,38 @@ def change_text_size():
         current_font_size = "Standard"
 
 
-    # Settings - Settings Screen
+    # -Settings - Settings Screen-
     settings_label.config(font=("Arial", font_size3))
     settings_back_button.config(font=("Arial", font_size1))
     size_button.config(text=current_font_size, font=("Arial", font_size3))
     size_button_identifier.config(font=("Arial", font_size2))
     
-    #Settings - Highscore Screen
+    # -Settings - Highscore Screen-
     highscore_label.config(font=("Arial", font_size3))
     highscore_back_button.config(font=("Arial", font_size1))
 
-    # Settings - Game Screen
+    # -Settings - Game Screen-
     game_back_button.config(font=("Arial", font_size1))
     word_label.config(font=("Courier", font_size4))
     hearts_label.config(font=("Arial", font_size2))
-    timer_label.config(font=("Arial", font_size3))                                  #NEU
+    timer_label.config(font=("Arial", font_size3))
     
-    # Settings - Menu Screen
+    # -Settings - Menu Screen-
     btn_spielen.config(font=("Arial", font_size2))
     btn_einstellungen.config(font=("Arial", font_size2))
     btn_highscores.config(font=("Arial", font_size2))
     btn_beenden.config(font=("Arial", font_size2))
 
-    # Settings - Game Screen Auswahl Frame
+    # -Settings - Game Screen Auswahl Frame-
     btn_links.config(font=("Arial", font_size5))
     auswahl_label.config(font=("Arial", font_size3, "bold"))
     btn_rechts.config(font=("Arial", font_size5))
     
-    # Settings - Game Screen Keyboard (als Schleife)
+    # -Settings - Game Screen Keyboard (als Schleife)-
     for key_label in keys.values():
         key_label.config(font=("Arial", font_size2))
 
-
-
+# -Onscreen Size Buttons-
 size_control_frame = tk.Frame(screen_settings, bg=screen_colour) 
 size_control_frame.pack(pady=20) 
 size_button_identifier = tk.Label(size_control_frame, text="Text size", font=("Arial", font_size2), bg=screen_colour)
@@ -529,11 +518,10 @@ size_button = tk.Button(size_control_frame, text=current_font_size, font=("Arial
 size_button.pack(side="left", padx=10)
 root.bind("<BackSpace>", lambda event: go_back())
 
-
-# Background Clolour Controll
+# --Backgrounds--
 def all_redos():
     global screen_colour, menu_colour, game_colour, standard_background_clours, canvas
-    # Other Screens
+    # -Other Screens-
     screen_settings.config(bg=screen_colour)
     screen_highscores.config(bg=screen_colour)
     size_button_identifier.config(bg=screen_colour)
@@ -546,24 +534,25 @@ def all_redos():
     background_titel1.config(bg=screen_colour)
     background_titel2.config(bg=screen_colour)
     background_titel3.config(bg=screen_colour)
-    # Menu Screen
+    # -Menu Screen-
     screen_menu.config(bg=menu_colour)
     menu_canvas.config(bg=menu_colour)
-    # Game Screen
+    # -Game Screen-
     screen_game.config(bg=game_colour)
     word_label.config(bg=game_colour)
     hearts_label.config(bg=game_colour)
-    timer_label.config(bg=game_colour) # NEU
+    timer_label.config(bg=game_colour)
     auswahl_frame.config(bg=game_colour)
     btn_retry.config(bg=game_colour)
     auswahl_frame.config(bg=game_colour)
     btn_links.config(bg=game_colour)
     btn_rechts.config(bg=game_colour)
     canvas.config(bg=game_colour)
-    keyboard_frame.config(bg=game_colour) #keyboard 
+    keyboard_frame.config(bg=game_colour)  
     for frame in game_row_frames: 
         frame.config(bg=game_colour) 
     
+# --Background Colour Change Functions--
 def background_screen_change1():
     global screen_colour, standard_background_clours
     if screen_colour == standard_background_clours[2]:
@@ -628,6 +617,8 @@ def background_menu_change3():
         menu_colour = tertiarty_backgroud_colours[2]
     all_redos()
 
+# --Onscreen Background Buttons--
+# -Other Screens Background Colour-
 background_titel1 = tk.Label(screen_settings, text="Background Colour for other Screen's", font=("Arial", font_size2), bg=screen_colour) # Screen Background
 background_titel1.pack(pady=20) 
 background_control_frame1 = tk.Frame(screen_settings, bg=screen_colour) 
@@ -639,6 +630,7 @@ background_change_standard.pack(side="left", padx=10)
 background_change_standard = tk.Button(background_control_frame1, text="Background", font=("Arial", font_size3), bg=tertiarty_backgroud_colours[0], fg=tertiarty_backgroud_colours[0], relief="solid", borderwidth=1.5, command=background_screen_change3)
 background_change_standard.pack(side="left", padx=10)
 
+# -Game Background Colour-
 background_titel2 = tk.Label(screen_settings, text="Background Colour for the Game", font=("Arial", font_size2), bg=screen_colour)
 background_titel2.pack(pady=00)
 background_control_frame2 = tk.Frame(screen_settings, bg=screen_colour) 
@@ -650,6 +642,7 @@ background_change_standard.pack(side="left", padx=10)
 background_change_standard = tk.Button(background_control_frame2, text="Background", font=("Arial", font_size3), bg=tertiarty_backgroud_colours[1], fg=tertiarty_backgroud_colours[1], relief="solid", borderwidth=1.5, command=background_game_change3)
 background_change_standard.pack(side="left", padx=10)
 
+# -Menu Background Colour-
 background_titel3 = tk.Label(screen_settings, text="Background Colour for the Menu", font=("Arial", font_size2), bg=screen_colour)
 background_titel3.pack(pady=00)
 background_control_frame3 = tk.Frame(screen_settings, bg=screen_colour) 
@@ -662,7 +655,7 @@ background_change_standard = tk.Button(background_control_frame3, text="Backgrou
 background_change_standard.pack(side="left", padx=10)
 
  
-# --Highscore-Screen--
+# ---Highscore-Screen---
 highscore_label = tk.Label(screen_highscores, text="Highscores", font=("Arial", font_size3), bg="#EAE5E3")
 highscore_label.pack(pady=200)
 highscore_back_button = tk.Button(screen_highscores, text="← BACK", font=("Arial", font_size1), command=go_back)
@@ -670,36 +663,30 @@ highscore_back_button.place(x=20, y=20)
 root.bind("<BackSpace>", lambda event: go_back())
 
 
-# --Hilfsfunktionen: Sound--
-
-import winsound
-import time
-
-
+# ---Sounds---
 def play_sound_async(sound):
     threading.Thread(target=play_sound, args=(sound,), daemon=True).start() 
 
-# Angepasste load_sound-Funktion
+# -Angepasste load_sound-Funktion-
 def load_sound(name):
-    # Gibt ein Dictionary zurück, das die Frequenz(en) und Dauer(n) des Sounds enthält.
     if name == "success.wav":  # Win-Sound
         return {"freq": [880], "dur": [300]}
     elif name == "failed.wav":  # Fehler-Sound
         return {"freq": [220], "dur": [300]}
-    elif name == "win.wav":     # Sieg-Melodie (kurze Melodie)
+    elif name == "win.wav":     # Sieges-Sound
         return {"freq": [660, 880, 1320], "dur": [150, 150, 150]}
-    elif name == "lost.wav":    # Game Over Sound
+    elif name == "lost.wav":    # Game-Over-Sound
         return {"freq": [330, 220], "dur": [300, 300]}
     else:
         return None
 
-# Sounds laden
+# -Sounds laden-
 SOUND_CORRECT = load_sound("success.wav")
 SOUND_WRONG   = load_sound("failed.wav")
 SOUND_WIN     = load_sound("win.wav")
 SOUND_LOSE    = load_sound("lost.wav")
 
-# Abspiel-Funktion
+# -Abspiel Funktion-
 def play_sound(sound):
     if not sound:
         return
@@ -710,18 +697,16 @@ def play_sound(sound):
     except Exception as e:
         print("Play sound error:", e)
 
-# Test
+# -Startup Sound-
 if __name__ == "__main__":
     play_sound(SOUND_CORRECT)
     time.sleep(0.4)
     play_sound(SOUND_WRONG)
     time.sleep(0.4)
     play_sound(SOUND_WIN)
-    time.sleep(1)
-    play_sound(SOUND_LOSE)
 
 
 
-# Start mit Menü
+#----Start mit Menü----
 screen_menu.tkraise()
 root.mainloop()

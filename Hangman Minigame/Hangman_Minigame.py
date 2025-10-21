@@ -61,6 +61,7 @@ def go_back():
     # -1. Timer stoppen und ausblenden-
     stop_timer() 
     timer_label.place_forget()
+    hide_endgame_buttons()
     
     # -2. Spielzustand zurücksetzen und Auswahl wiederherstellen-
     auswahl_frame.place(relx=0.5, rely=0.55, anchor="center") 
@@ -318,12 +319,85 @@ def check_letter(key):
         word_label.config(text="🎉 Gewonnen! Das Wort war " + geheime_wort)
         play_sound_async(SOUND_WIN)
         elapsed_time = time.time() - timer_start_time
-        time_ms = int(elapsed_time * 1000)
+        global last_time_ms
+        last_time_ms = int(elapsed_time * 1000) # Speichern der Zeit in Millisekunden
+        show_endgame_buttons()
+
+        # NEU: Speichere den Highscore
+def save_score(name, time_ms, category):
+    """Fügt den neuen Score zur globalen Liste hinzu und speichert sie."""
+    global highscores
+    
+    # Sicherstellen, dass die Kategorie existiert
+    if category not in highscores:
+        highscores[category] = []
+        
+    highscores[category].append({
+        "name": name,
+        "time_ms": time_ms
+    })
+    
+    # Sortiere die Scores (schnellste Zeit (kleinere time_ms) zuerst)
+    highscores[category].sort(key=lambda x: x["time_ms"])
+    
+    # Beschränke auf die Top 50
+    highscores[category] = highscores[category][:50]
+    
+    save_highscores(highscores) # Speichern in der Datei
+    update_highscores_display() # Highscore-Liste aktualisieren
+
+def show_name_input_popup():
+    """Öffnet ein TopLevel-Fenster zur Eingabe des Namens."""
+    hide_endgame_buttons() # Buttons im Hintergrund ausblenden
+    
+    popup = tk.Toplevel(root)
+    popup.title("Highscore speichern")
+    # Positioniere das Fenster mittig (einfache Methode)
+    window_width = 300
+    window_height = 150
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    center_x = int(screen_width/2 - window_width/2)
+    center_y = int(screen_height/2 - window_height/2)
+    popup.geometry(f'{window_width}x{window_height}+{center_x}+{center_y}')
+    popup.resizable(False, False)
+    popup.grab_set() # Blockiert Interaktion mit dem Hauptfenster
+    
+    tk.Label(popup, text="Name eingeben:", font=("Arial", 16)).pack(pady=10)
+    
+    name_entry = tk.Entry(popup, font=("Arial", 14), width=20)
+    name_entry.pack(pady=5, padx=20)
+    name_entry.focus_set()
+
+    def submit_score(event=None):
+        name = name_entry.get()
+        if name:
+            current_category = kategorien[kategorie_index]
+            # Speichere den Score und schließe das Fenster
+            save_score(name, last_time_ms, current_category)
+            popup.destroy()
+            
+            # Gehe zum Highscore Screen
+            screen_highscores.tkraise()
+        else:
+            # Einfache Meldung für leeren Namen
+            name_entry.insert(0, "BITTE NAMEN EINGEBEN!")
+            
+    name_entry.bind("<Return>", submit_score)
+    
+    tk.Button(popup, text="Speichern", command=submit_score).pack(pady=10)
      
 
-# -Retry anzeigen-
-def show_retry_button():
-    btn_retry.place(relx=0.5, rely=0.53, anchor='center')
+# (Retry + Save)
+def show_endgame_buttons():
+    """Platziert Retry und Save Button über der Tastatur."""
+    btn_retry.place(relx=0.45, rely=0.53, anchor='center')
+    btn_save_score.place(relx=0.55, rely=0.53, anchor='center')
+
+def hide_endgame_buttons():
+    """Blendet die Buttons aus."""
+    btn_retry.place_forget()
+    btn_save_score.place_forget()
 
 # -Themen mit Wörtern-
 themen_woerter = {
@@ -342,12 +416,26 @@ erratene_buchstaben = set()
 leben = 6
 hangman_parts = []
 
-
-# -Retry Button-
+# Globale Timer-Variablen
+timer_running = False
+timer_start_time = 0.0
+timer_job = None # Für die root.after-Funktion
+last_time_ms = 0 # NEU: Für das Speichern der letzten Spielzeit
+# Label für die Timer-Anzeige
+timer_label = tk.Label(screen_game, text="00:00:000", font=("Arial", font_size3), bg=game_colour)
+# Retry Button
+# Unicode-Symbol für Wiederholen: 🔄 (U+1F504)
 btn_retry = tk.Button(screen_game, text="🔄", font=("Arial", font_size5),
-                      command=show_selection,
-                      bg=game_colour, fg="#333333", 
-                      relief="raised", bd=3)
+                     command=show_selection,
+                     bg=game_colour, fg="#333333", # fg ist die Schriftfarbe (dunkelgrau)
+                     relief="raised", bd=3)
+# NEU: Save Highscore Button
+btn_save_score = tk.Button(screen_game, text="💾", font=("Arial", font_size5),
+                           command=show_name_input_popup,
+                           bg=game_colour, fg="#333333",
+                           relief="raised", bd=3)
+
+# ... (weiterer Code für auswahl_frame)
 
 
 # --Frame für Auswahl--
@@ -487,6 +575,8 @@ def change_text_size():
     # -Settings - Highscore Screen-
     highscore_label.config(font=("Arial", font_size3))
     highscore_back_button.config(font=("Arial", font_size1))
+    highscore_kategorie_label.config(font=("Arial", font_size2))
+    update_highscores_display()
 
     # -Settings - Game Screen-
     game_back_button.config(font=("Arial", font_size1))
@@ -655,12 +745,123 @@ background_change_standard = tk.Button(background_control_frame3, text="Backgrou
 background_change_standard.pack(side="left", padx=10)
 
  
-# ---Highscore-Screen---
-highscore_label = tk.Label(screen_highscores, text="Highscores", font=("Arial", font_size3), bg="#EAE5E3")
-highscore_label.pack(pady=200)
+# --Highscore-Screen--
+
+HIGHSCORE_FILE = "highscores.json"
+
+def load_highscores():
+    global themen_woerter
+    """Lädt Highscores aus der JSON-Datei."""
+    if os.path.exists(HIGHSCORE_FILE):
+        with open(HIGHSCORE_FILE, 'r') as f:
+            try:
+                # Highscores nach Kategorie: {"Länder": [...], "Tiere": [...]}
+                return json.load(f)
+            except json.JSONDecodeError:
+                # Falls die Datei leer oder korrupt ist
+                return {k: [] for k in themen_woerter.keys()}
+    return {k: [] for k in themen_woerter.keys()}
+
+def save_highscores(scores):
+    """Speichert Highscores in der JSON-Datei."""
+    with open(HIGHSCORE_FILE, 'w') as f:
+        json.dump(scores, f, indent=4)
+
+# Globale Variable für Highscores initialisieren
+highscores = load_highscores()
+
+
+# Container für die Steuerelemente (Kategorieauswahl)
+highscore_control_frame = tk.Frame(screen_highscores, bg=screen_colour)
+highscore_control_frame.pack(pady=20)
+
+highscore_label = tk.Label(highscore_control_frame, text="Highscores", font=("Arial", font_size3), bg=screen_colour)
+highscore_label.pack(side="top", pady=10)
+
 highscore_back_button = tk.Button(screen_highscores, text="← BACK", font=("Arial", font_size1), command=go_back)
 highscore_back_button.place(x=20, y=20)
-root.bind("<BackSpace>", lambda event: go_back())
+
+# NEU: Label für die aktuelle Kategorieanzeige im Highscore-Screen
+highscore_kategorie_label = tk.Label(highscore_control_frame, text="Kategorie: Länder", font=("Arial", font_size2), bg=screen_colour)
+highscore_kategorie_label.pack(pady=5)
+
+# NEU: Rahmen für die eigentliche Highscore-Liste
+highscore_list_frame = tk.Frame(screen_highscores, bg=screen_colour)
+highscore_list_frame.pack(pady=10, fill="both", expand=True)
+
+# NEU: Scrollbarer Bereich für die Highscores
+canvas_hs = tk.Canvas(highscore_list_frame, bg=screen_colour, highlightthickness=0)
+scrollbar = tk.Scrollbar(highscore_list_frame, orient="vertical", command=canvas_hs.yview)
+scrollable_frame = tk.Frame(canvas_hs, bg=screen_colour)
+
+scrollable_frame.bind(
+    "<Configure>",
+    lambda e: canvas_hs.configure(
+        scrollregion=canvas_hs.bbox("all")
+    )
+)
+
+canvas_hs.create_window((0, 0), window=scrollable_frame, anchor="nw")
+canvas_hs.configure(yscrollcommand=scrollbar.set)
+
+# Platziere Canvas und Scrollbar
+scrollbar.pack(side="right", fill="y")
+canvas_hs.pack(side="left", fill="both", expand=True, padx=20)
+
+
+# Funktion, um die Anzeige zu aktualisieren
+def update_highscores_display():
+    """Löscht die aktuelle Liste und baut die Top 50 der aktuellen Kategorie neu auf."""
+    
+    # 1. Alte Widgets löschen
+    for widget in scrollable_frame.winfo_children():
+        widget.destroy()
+
+    # 2. Kategorie setzen
+    current_category = kategorien[kategorie_index] # Nutzt die aktuell gewählte Spiel-Kategorie
+    highscore_kategorie_label.config(text=f"Kategorie: {current_category}")
+    
+    scores = highscores.get(current_category, [])
+
+    # Kopfzeile
+    tk.Label(scrollable_frame, text="Platz", font=("Courier", font_size2, "bold"), bg=screen_colour, width=5).grid(row=0, column=0, padx=5, pady=5)
+    tk.Label(scrollable_frame, text="Name", font=("Courier", font_size2, "bold"), bg=screen_colour, width=20, anchor="w").grid(row=0, column=1, padx=5, pady=5)
+    tk.Label(scrollable_frame, text="Zeit (mm:ss:ms)", font=("Courier", font_size2, "bold"), bg=screen_colour, width=15).grid(row=0, column=2, padx=5, pady=5)
+    
+    # 3. Scores anzeigen
+    for rank, score in enumerate(scores):
+        name = score['name']
+        time_ms = score['time_ms']
+        
+        # Zeit formatieren (mm:ss:ms)
+        total_seconds = time_ms / 1000
+        minutes = int(total_seconds // 60)
+        seconds = int(total_seconds % 60)
+        milliseconds = int(time_ms % 1000)
+        time_str = f"{minutes:02d}:{seconds:02d}:{milliseconds:03d}"
+        
+        row_num = rank + 1
+        
+        # Hintergrundfarbe abwechseln
+        bg_color = "#F0F0F0" if row_num % 2 == 0 else "white"
+        
+        tk.Label(scrollable_frame, text=f"{row_num}.", font=("Courier", font_size1), bg=bg_color, width=5).grid(row=row_num, column=0, padx=5, pady=2, sticky="ew")
+        tk.Label(scrollable_frame, text=name, font=("Courier", font_size1), bg=bg_color, width=20, anchor="w").grid(row=row_num, column=1, padx=5, pady=2, sticky="ew")
+        tk.Label(scrollable_frame, text=time_str, font=("Courier", font_size1), bg=bg_color, width=15).grid(row=row_num, column=2, padx=5, pady=2, sticky="ew")
+        
+        # Wichtig: Die Hintergrundfarbe der Labels muss bei Farbwechseln im Settings-Screen mitgeändert werden. 
+        # Da dies komplex ist, verwenden wir hier feste Farben.
+
+# Überschreibe die `go_back` Funktion (ca. Zeile 50) um Highscores zu aktualisieren
+# Ich habe das bereits oben unter Punkt 4 abgedeckt.
+        
+# NEU: Wenn der Highscore-Screen angezeigt wird, soll die Liste aktualisiert werden
+def show_highscores_screen():
+    update_highscores_display()
+    screen_highscores.tkraise()
+
+# 4. Ersetze den alten Command des Highscore-Buttons (im Menü, ca. Zeile 163)
+btn_highscores.config(command=show_highscores_screen)
 
 
 # ---Sounds---

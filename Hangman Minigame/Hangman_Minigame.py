@@ -628,6 +628,10 @@ def all_redos():
     background_titel1.config(bg=screen_colour)
     background_titel2.config(bg=screen_colour)
     background_titel3.config(bg=screen_colour)
+    highscore_control_frame.config(bg=screen_colour)
+    highscore_kategorie_label.config(bg=screen_colour)
+    highscore_list_frame.config(bg=screen_colour)
+    canvas_hs.config(bg=screen_colour)
     # -Menu Screen-
     screen_menu.config(bg=menu_colour)
     menu_canvas.config(bg=menu_colour)

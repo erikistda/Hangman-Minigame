@@ -10,6 +10,7 @@ import winsound
 from tkinter import font
 from turtle import back
 from importlib import reload
+from tkinter import messagebox
 
 SOUNDS_DIR = os.path.join(os.path.dirname(__file__), "Sounds")
 
@@ -34,6 +35,8 @@ game_colour = standard_background_clours[1]
 screen_colour = standard_background_clours[2]
 
 game_row_frames = []
+erster_loesch_knopf = False
+anzahl_loesch_knöpfe = 0
 
 # ---Window setup---
 def on_escape(event=None):
@@ -779,6 +782,31 @@ highscore_label.pack(side="top", pady=10)
 highscore_back_button = tk.Button(screen_highscores, text="← BACK", font=("Arial", font_size1), command=go_back)
 highscore_back_button.place(x=20, y=20)
 
+# --Deleating Highscores---
+
+# --Alles löschen-Button--
+clear_all_button = tk.Button(
+    screen_highscores,
+    text="Alle löschen",
+    font=("Arial", font_size1),
+    bg="#FF5555",
+    fg="white",
+    command=lambda: clear_all_highscores()
+)
+clear_all_button.place(x=400, y=20)
+
+def clear_all_highscores():
+    """Löscht alle Highscores in der aktuellen Kategorie nach Bestätigung."""
+    current_category = kategorien[kategorie_index]
+    if not highscores.get(current_category):
+        messagebox.showinfo("Info", f"Keine Einträge in {current_category} zum Löschen.")
+        return
+
+    if messagebox.askyesno("Bestätigen", f"Alle Highscores für {current_category} löschen?"):
+        highscores[current_category] = []
+        save_highscores(highscores)
+        update_highscores_display()
+
 # -Label für die aktuelle Kategorieanzeige im Highscore-Screen-
 highscore_kategorie_label = tk.Label(highscore_control_frame, text="Kategorie: Länder", font=("Arial", font_size2), bg=screen_colour)
 highscore_kategorie_label.pack(pady=5)
@@ -786,6 +814,93 @@ highscore_kategorie_label.pack(pady=5)
 # -Rahmen für die eigentliche Highscore-Liste-
 highscore_list_frame = tk.Frame(screen_highscores, bg=screen_colour)
 highscore_list_frame.pack(pady=10, fill="both", expand=True)
+
+# --Einzelne Highscore löschen Funktion--
+def delete_single_highscore(category, index):
+    """Löscht einen einzelnen Highscore aus der gegebenen Kategorie und aktualisiert Anzeige + Datei."""
+    global highscores
+    if category not in highscores:
+        return
+    if 0 <= index < len(highscores[category]):
+        del highscores[category][index]
+        save_highscores(highscores)
+        update_highscores_display()
+
+def update_highscores_display():
+    """Highscore-Liste mit Abstand zwischen den Zeilen und 🗑️ rechts."""
+    for widget in scrollable_frame.winfo_children():
+        widget.destroy()
+
+    current_category = kategorien[kategorie_index]
+    highscore_kategorie_label.config(text=f"Kategorie: {current_category}")
+    scores = highscores.get(current_category, [])
+
+    # -Header-
+    header = tk.Frame(scrollable_frame, bg=screen_colour)
+    header.pack(fill="x", padx=40, pady=(0, 5))
+    tk.Label(header, text="Platz", font=("Courier", font_size2, "bold"),
+             bg=screen_colour, anchor="w", width=6).grid(row=0, column=0, sticky="w")
+    tk.Label(header, text="Name", font=("Courier", font_size2, "bold"),
+             bg=screen_colour, anchor="w", width=24).grid(row=0, column=1, sticky="w")
+    tk.Label(header, text="Zeit (mm:ss:ms)", font=("Courier", font_size2, "bold"),
+             bg=screen_colour, anchor="w", width=18).grid(row=0, column=2, sticky="w", padx=(40, 0))
+    tk.Label(header, text="", bg=screen_colour, width=3).grid(row=0, column=3)
+
+    for i, score in enumerate(scores):
+        # -Abwechselnde Zeilenfarben-
+        bg_color = "#ffffff" if i % 2 == 0 else "#f2f0ef"
+
+        # -Äußerer Rahmen in Hintergrundfarbe-
+        outer_frame = tk.Frame(scrollable_frame, bg=screen_colour)
+        outer_frame.pack(fill="x", padx=40, pady=(2, 3))  
+
+        # -Innerer Frame = eigentliche Zeile-
+        row = tk.Frame(outer_frame, bg=bg_color)
+        row.pack(fill="x", padx=0, pady=0, ipadx=0, ipady=0)
+
+        # -Zeit berechnen-
+        time_ms = score.get("time_ms", 0)
+        total_seconds = time_ms / 1000
+        minutes = int(total_seconds // 60)
+        seconds = int(total_seconds % 60)
+        milliseconds = int(time_ms % 1000)
+        time_str = f"{minutes:02d}:{seconds:02d}:{milliseconds:03d}"
+
+        # -Spaltenlayout-
+        row.grid_columnconfigure(0, weight=0)
+        row.grid_columnconfigure(1, weight=1)
+        row.grid_columnconfigure(2, weight=0)
+        row.grid_columnconfigure(3, weight=0)
+
+        # -Platz-
+        tk.Label(row, text=f"{i+1}.", font=("Courier", font_size1),
+                 bg=bg_color, width=5, anchor="w").grid(row=0, column=0, sticky="w", padx=(10, 10), pady=6)
+
+        # -Name-
+        tk.Label(row, text=score.get("name", ""), font=("Courier", font_size1),
+                 bg=bg_color, anchor="w").grid(row=0, column=1, sticky="we", pady=6)
+
+        # -Zeit-
+        tk.Label(row, text=time_str, font=("Courier", font_size1),
+                 bg=bg_color, width=18, anchor="e").grid(row=0, column=2, sticky="e", padx=(50, 5), pady=6)
+
+        # -🗑️ Lösch-Button-
+        delete_btn = tk.Button(
+            row,
+            text="🗑️",
+            font=("Segoe UI Emoji", font_size1 + 2),
+            bg="#ff6666",
+            fg="white",
+            relief="raised",
+            width=2,
+            height=1,
+            pady=-1,
+            command=lambda idx=i, cat=current_category: delete_single_highscore(cat, idx)
+        )
+        delete_btn.grid(row=0, column=3, sticky="e", padx=(8, 12), pady=4)
+
+
+    canvas_hs.update_idletasks()
 
 # -Scrollbarer Bereich für die Highscores-
 canvas_hs = tk.Canvas(highscore_list_frame, bg=screen_colour, highlightthickness=0)
@@ -806,47 +921,6 @@ canvas_hs.configure(yscrollcommand=scrollbar.set)
 scrollbar.pack(side="right", fill="y")
 canvas_hs.pack(side="left", fill="both", expand=True, padx=20)
 
-
-# --Funktion, um die Anzeige zu aktualisieren--
-def update_highscores_display():
-    """Löscht die aktuelle Liste und baut die Top 50 der aktuellen Kategorie neu auf."""
-    
-    # -1. Alte Widgets löschen-
-    for widget in scrollable_frame.winfo_children():
-        widget.destroy()
-
-    # -2. Kategorie setzen-
-    current_category = kategorien[kategorie_index] # Nutzt die aktuell gewählte Spiel-Kategorie
-    highscore_kategorie_label.config(text=f"Kategorie: {current_category}")
-    
-    scores = highscores.get(current_category, [])
-
-    # -Kopfzeile-
-    tk.Label(scrollable_frame, text="Platz", font=("Courier", font_size2, "bold"), bg=screen_colour, width=5).grid(row=0, column=0, padx=5, pady=5)
-    tk.Label(scrollable_frame, text="Name", font=("Courier", font_size2, "bold"), bg=screen_colour, width=20, anchor="w").grid(row=0, column=1, padx=5, pady=5)
-    tk.Label(scrollable_frame, text="Zeit (mm:ss:ms)", font=("Courier", font_size2, "bold"), bg=screen_colour, width=15).grid(row=0, column=2, padx=5, pady=5)
-    
-    # --3. Scores anzeigen--
-    for rank, score in enumerate(scores):
-        name = score['name']
-        time_ms = score['time_ms']
-        
-        # -Zeit formatieren (mm:ss:ms)-
-        total_seconds = time_ms / 1000
-        minutes = int(total_seconds // 60)
-        seconds = int(total_seconds % 60)
-        milliseconds = int(time_ms % 1000)
-        time_str = f"{minutes:02d}:{seconds:02d}:{milliseconds:03d}"
-        
-        row_num = rank + 1
-        
-        # -Hintergrundfarbe abwechseln-
-        bg_color = "#F0F0F0" if row_num % 2 == 0 else "white"
-        
-        tk.Label(scrollable_frame, text=f"{row_num}.", font=("Courier", font_size1), bg=bg_color, width=5).grid(row=row_num, column=0, padx=5, pady=2, sticky="ew")
-        tk.Label(scrollable_frame, text=name, font=("Courier", font_size1), bg=bg_color, width=20, anchor="w").grid(row=row_num, column=1, padx=5, pady=2, sticky="ew")
-        tk.Label(scrollable_frame, text=time_str, font=("Courier", font_size1), bg=bg_color, width=15).grid(row=row_num, column=2, padx=5, pady=2, sticky="ew")
-        
 # --Aktualisierung der Anzeige beim Öffnen des Highscore-Screens--
 def show_highscores_screen():
     update_highscores_display()
@@ -854,7 +928,6 @@ def show_highscores_screen():
 
 # -4. Ersetze den alten Command des Highscore-Buttons (im Menü, ca. Zeile 163)-
 btn_highscores.config(command=show_highscores_screen)
-
 
 # ---Sounds---
 def play_sound_async(sound):
@@ -897,8 +970,6 @@ if __name__ == "__main__":
     play_sound(SOUND_WRONG)
     time.sleep(0.4)
     play_sound(SOUND_WIN)
-
-
 
 #----Start mit Menü----
 screen_menu.tkraise()

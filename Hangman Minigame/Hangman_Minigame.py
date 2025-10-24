@@ -78,7 +78,12 @@ def go_back():
     # -Zurück zum Hauptmenü-
     screen_menu.tkraise()
 
-    #--Zeigt den Game Screen und die Themenauswahl an, um ein neues Spiel zu starten.--
+    # Nach Rückkehr ins Menü: alte Pfeiltasten-Bindings wiederherstellen
+    root.unbind("<Left>")
+    root.unbind("<Right>")
+    root.bind("<Left>", prev_kategorie)
+    root.bind("<Right>", next_kategorie)
+
 def show_selection():
     global auswahl_aktiv, leben
 
@@ -952,6 +957,14 @@ canvas_hs.pack(side="left", fill="both", expand=True, padx=20)
 
 # --Aktualisierung der Anzeige beim Öffnen des Highscore-Screens--
 def show_highscores_screen():
+    # -Alte Tastaturbindungen (vom Spiel) entfernen-
+    root.unbind("<Left>")
+    root.unbind("<Right>")
+    
+    # -Highscore-Tasten aktivieren-
+    root.bind("<Left>", prev_highscore_category)
+    root.bind("<Right>", next_highscore_category)
+    
     update_highscores_display()
     screen_highscores.tkraise()
 

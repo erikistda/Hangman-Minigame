@@ -78,7 +78,12 @@ def go_back():
     # -Zurück zum Hauptmenü-
     screen_menu.tkraise()
 
-    #--Zeigt den Game Screen und die Themenauswahl an, um ein neues Spiel zu starten.--
+    # Nach Rückkehr ins Menü: alte Pfeiltasten-Bindings wiederherstellen
+    root.unbind("<Left>")
+    root.unbind("<Right>")
+    root.bind("<Left>", prev_kategorie)
+    root.bind("<Right>", next_kategorie)
+
 def show_selection():
     global auswahl_aktiv, leben
 
@@ -805,9 +810,6 @@ def clear_all_highscores():
         save_highscores(highscores)
         update_highscores_display()
 
-# -Label für die aktuelle Kategorieanzeige im Highscore-Screen-
-highscore_kategorie_label = tk.Label(highscore_control_frame, text="Kategorie: Länder", font=("Arial", font_size2), bg=screen_colour)
-highscore_kategorie_label.pack(pady=5)
 
 # -Rahmen für die eigentliche Highscore-Liste-
 highscore_list_frame = tk.Frame(screen_highscores, bg=screen_colour)
@@ -900,6 +902,40 @@ def update_highscores_display():
 
     canvas_hs.update_idletasks()
 
+# -- Kategorie-Wechsel im Highscore-Screen --
+
+def next_highscore_category(event=None):
+    global kategorie_index
+    kategorie_index = (kategorie_index + 1) % len(kategorien)
+    update_highscores_display()
+
+def prev_highscore_category(event=None):
+    global kategorie_index
+    kategorie_index = (kategorie_index - 1) % len(kategorien)
+    update_highscores_display()
+
+# --Kategorie-Auswahlzeile im Highscore-Screen ersetzen--
+highscore_kategorie_frame = tk.Frame(highscore_control_frame, bg=screen_colour)
+highscore_kategorie_frame.pack(pady=5)
+
+btn_highscore_links = tk.Label(highscore_kategorie_frame, text="◀", font=("Arial", font_size4),
+                               bg=screen_colour, cursor="hand2")
+btn_highscore_links.pack(side="left", padx=15)
+
+highscore_kategorie_label = tk.Label(highscore_kategorie_frame, text="Kategorie: Länder",
+                                     font=("Arial", font_size2), bg=screen_colour)
+highscore_kategorie_label.pack(side="left", padx=5)
+
+btn_highscore_rechts = tk.Label(highscore_kategorie_frame, text="▶", font=("Arial", font_size4),
+                                bg=screen_colour, cursor="hand2")
+btn_highscore_rechts.pack(side="left", padx=15)
+
+# -Verknüpfungen-
+btn_highscore_links.bind("<Button-1>", prev_highscore_category)
+btn_highscore_rechts.bind("<Button-1>", next_highscore_category)
+root.bind("<Left>", prev_highscore_category)
+root.bind("<Right>", next_highscore_category)
+
 # -Scrollbarer Bereich für die Highscores-
 canvas_hs = tk.Canvas(highscore_list_frame, bg=screen_colour, highlightthickness=0)
 scrollbar = tk.Scrollbar(highscore_list_frame, orient="vertical", command=canvas_hs.yview)
@@ -921,6 +957,14 @@ canvas_hs.pack(side="left", fill="both", expand=True, padx=20)
 
 # --Aktualisierung der Anzeige beim Öffnen des Highscore-Screens--
 def show_highscores_screen():
+    # -Alte Tastaturbindungen (vom Spiel) entfernen-
+    root.unbind("<Left>")
+    root.unbind("<Right>")
+    
+    # -Highscore-Tasten aktivieren-
+    root.bind("<Left>", prev_highscore_category)
+    root.bind("<Right>", next_highscore_category)
+    
     update_highscores_display()
     screen_highscores.tkraise()
 

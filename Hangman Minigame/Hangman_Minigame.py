@@ -781,7 +781,9 @@ highscore_label.pack(side="top", pady=10)
 highscore_back_button = tk.Button(screen_highscores, text="← BACK", font=("Arial", font_size1), command=go_back)
 highscore_back_button.place(x=20, y=20)
 
-# Optionaler "Alles löschen"-Button oben
+# --Deleating Highscores---
+
+# --Alles löschen-Button--
 clear_all_button = tk.Button(
     screen_highscores,
     text="Alle löschen",
@@ -812,9 +814,9 @@ highscore_kategorie_label.pack(pady=5)
 highscore_list_frame = tk.Frame(screen_highscores, bg=screen_colour)
 highscore_list_frame.pack(pady=10, fill="both", expand=True)
 
-# --- Einzelnen Highscore löschen (bleibt gleichfunktional) ---
+# --Einzelne Highscore löschen Funktion--
 def delete_single_highscore(category, index):
-    """Löscht einen einzelnen Highscore aus der gegebenen Kategorie."""
+    """Löscht einen einzelnen Highscore aus der gegebenen Kategorie und aktualisiert Anzeige + Datei."""
     global highscores
     if category not in highscores:
         return
@@ -823,11 +825,8 @@ def delete_single_highscore(category, index):
         save_highscores(highscores)
         update_highscores_display()
 
-
-# --- Anzeige aktualisieren (robust: jede Zeile ist ein Frame, Button immer sichtbar) ---
 def update_highscores_display():
-    """Erstellt die Highscore-Liste neu. Jede Zeile ist ein Frame mit Labels + Trash-Button am Ende."""
-    # Alte Widgets löschen
+    """Highscore-Liste mit Abstand zwischen den Zeilen und 🗑️ rechts."""
     for widget in scrollable_frame.winfo_children():
         widget.destroy()
 
@@ -835,68 +834,72 @@ def update_highscores_display():
     highscore_kategorie_label.config(text=f"Kategorie: {current_category}")
     scores = highscores.get(current_category, [])
 
-    # Kopfzeile (als eigene Zeile mit etwas Abstand)
-    header_frame = tk.Frame(scrollable_frame, bg=screen_colour)
-    header_frame.pack(fill="x", pady=(0,6))
-    tk.Label(header_frame, text="Platz", font=("Courier", font_size2, "bold"),
-             bg=screen_colour, width=5, anchor="w").pack(side="left", padx=(5,10))
-    tk.Label(header_frame, text="Name", font=("Courier", font_size2, "bold"),
-             bg=screen_colour, width=30, anchor="w").pack(side="left", padx=(0,10))
-    tk.Label(header_frame, text="Zeit (mm:ss:ms)", font=("Courier", font_size2, "bold"),
-             bg=screen_colour, width=18, anchor="w").pack(side="left", padx=(0,10))
-    tk.Label(header_frame, text="", bg=screen_colour, width=4).pack(side="left")  # Platz für Trash
+    # -Header-
+    header = tk.Frame(scrollable_frame, bg=screen_colour)
+    header.pack(fill="x", padx=40, pady=(0, 5))
+    tk.Label(header, text="Platz", font=("Courier", font_size2, "bold"),
+             bg=screen_colour, anchor="w", width=6).grid(row=0, column=0, sticky="w")
+    tk.Label(header, text="Name", font=("Courier", font_size2, "bold"),
+             bg=screen_colour, anchor="w", width=24).grid(row=0, column=1, sticky="w")
+    tk.Label(header, text="Zeit (mm:ss:ms)", font=("Courier", font_size2, "bold"),
+             bg=screen_colour, anchor="w", width=18).grid(row=0, column=2, sticky="w", padx=(40, 0))
+    tk.Label(header, text="", bg=screen_colour, width=3).grid(row=0, column=3)
 
-    # Inhalt: für jeden Score eine eigene Zeile (Frame) bauen
-    for rank, score in enumerate(scores):
-        name = score.get("name", "")
+    for i, score in enumerate(scores):
+        # -Abwechselnde Zeilenfarben-
+        bg_color = "#ffffff" if i % 2 == 0 else "#f2f0ef"
+
+        # -Äußerer Rahmen in Hintergrundfarbe-
+        outer_frame = tk.Frame(scrollable_frame, bg=screen_colour)
+        outer_frame.pack(fill="x", padx=40, pady=(2, 3))  
+
+        # -Innerer Frame = eigentliche Zeile-
+        row = tk.Frame(outer_frame, bg=bg_color)
+        row.pack(fill="x", padx=0, pady=0, ipadx=0, ipady=0)
+
+        # -Zeit berechnen-
         time_ms = score.get("time_ms", 0)
-
-        # Zeit formatieren
         total_seconds = time_ms / 1000
         minutes = int(total_seconds // 60)
         seconds = int(total_seconds % 60)
         milliseconds = int(time_ms % 1000)
         time_str = f"{minutes:02d}:{seconds:02d}:{milliseconds:03d}"
 
-        row_num = rank + 1
-        # abwechselnde Hintergründe
-        bg_color = "#F0F0F0" if row_num % 2 == 0 else "white"
+        # -Spaltenlayout-
+        row.grid_columnconfigure(0, weight=0)
+        row.grid_columnconfigure(1, weight=1)
+        row.grid_columnconfigure(2, weight=0)
+        row.grid_columnconfigure(3, weight=0)
 
-        row_frame = tk.Frame(scrollable_frame, bg=bg_color)
-        row_frame.pack(fill="x", pady=1)
+        # -Platz-
+        tk.Label(row, text=f"{i+1}.", font=("Courier", font_size1),
+                 bg=bg_color, width=5, anchor="w").grid(row=0, column=0, sticky="w", padx=(10, 10), pady=6)
 
-        # Spaltengewichte
-        row_frame.columnconfigure(0, weight=1)  # Platznummer
-        row_frame.columnconfigure(1, weight=4)  # Name
-        row_frame.columnconfigure(2, weight=2)  # Zeit
-        row_frame.columnconfigure(3, weight=0)  # Trash-Button
+        # -Name-
+        tk.Label(row, text=score.get("name", ""), font=("Courier", font_size1),
+                 bg=bg_color, anchor="w").grid(row=0, column=1, sticky="we", pady=6)
 
-        # Labels
-        tk.Label(row_frame, text=f"{row_num}.", font=("Courier", font_size1),
-                 bg=bg_color, width=5, anchor="w").grid(row=0, column=0, padx=(5,8))
-        tk.Label(row_frame, text=name, font=("Courier", font_size1),
-                 bg=bg_color, anchor="w").grid(row=0, column=1, padx=(0,10), sticky="w")
-        tk.Label(row_frame, text=time_str, font=("Courier", font_size1),
-                 bg=bg_color, width=18, anchor="e").grid(row=0, column=2, padx=(0,10), sticky="e")
+        # -Zeit-
+        tk.Label(row, text=time_str, font=("Courier", font_size1),
+                 bg=bg_color, width=18, anchor="e").grid(row=0, column=2, sticky="e", padx=(50, 5), pady=6)
 
-        # Trash-Button
+        # -🗑️ Lösch-Button-
         delete_btn = tk.Button(
-            row_frame,
+            row,
             text="🗑️",
-            font=("Arial", font_size1),
+            font=("Segoe UI Emoji", font_size1 + 2),
             bg="#ff6666",
             fg="white",
-            width=3,
             relief="raised",
-            command=lambda i=rank, cat=current_category: delete_single_highscore(cat, i)
+            width=2,
+            height=1,
+            pady=-1,
+            command=lambda idx=i, cat=current_category: delete_single_highscore(cat, idx)
         )
-        delete_btn.grid(row=0, column=3, padx=(5,12), sticky="e")
+        delete_btn.grid(row=0, column=3, sticky="e", padx=(8, 12), pady=4)
 
 
-
-    # Force layout update (hilft, damit Canvas die neue Größe erkennt)
     canvas_hs.update_idletasks()
-
 
 # -Scrollbarer Bereich für die Highscores-
 canvas_hs = tk.Canvas(highscore_list_frame, bg=screen_colour, highlightthickness=0)
@@ -962,7 +965,7 @@ def play_sound(sound):
         print("Play sound error:", e)
 
 # -Startup Sound-
-
+    #removed for the sake of my sanity while testing
 
 
 

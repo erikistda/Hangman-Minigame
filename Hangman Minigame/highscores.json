@@ -1,10 +1,6 @@
 {
     "L\u00e4nder": [
         {
-            "name": "test2",
-            "time_ms": 3922
-        },
-        {
             "name": "test3",
             "time_ms": 13315
         },
@@ -21,7 +17,12 @@
             "time_ms": 9953
         }
     ],
-    "Hauptst\u00e4dte": [],
+    "Hauptst\u00e4dte": [
+        {
+            "name": "test1",
+            "time_ms": 6487
+        }
+    ],
     "Tiere": [],
     "Informatik": [],
     "Elemente": [],

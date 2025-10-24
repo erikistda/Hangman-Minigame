@@ -388,17 +388,18 @@ def show_name_input_popup():
 
 # -(Retry + Save)-
 def show_retry_button():
-    """Platziert nur den Retry Button (z.B. nach dem Verlieren)."""
+    #-Platziert nur den Retry Button (z.B. nach dem Verlieren).-
     btn_retry.place(relx=0.5, rely=0.53, anchor='center')
 def show_endgame_buttons():
-    """Platziert Retry und Save Button über der Tastatur."""
+    #-Platziert Retry und Save Button über der Tastatur.-
     btn_retry.place(relx=0.45, rely=0.53, anchor='center')
     btn_save_score.place(relx=0.55, rely=0.53, anchor='center')
 
 def hide_endgame_buttons():
-    """Blendet die Buttons aus."""
+    #-Blendet die Buttons aus.-
     btn_retry.place_forget()
     btn_save_score.place_forget()
+
 
 # -Themen mit Wörtern-
 themen_woerter = {
@@ -920,7 +921,6 @@ canvas_hs.configure(yscrollcommand=scrollbar.set)
 scrollbar.pack(side="right", fill="y")
 canvas_hs.pack(side="left", fill="both", expand=True, padx=20)
 
-
 # --Aktualisierung der Anzeige beim Öffnen des Highscore-Screens--
 def show_highscores_screen():
     update_highscores_display()
@@ -928,7 +928,6 @@ def show_highscores_screen():
 
 # -4. Ersetze den alten Command des Highscore-Buttons (im Menü, ca. Zeile 163)-
 btn_highscores.config(command=show_highscores_screen)
-
 
 # ---Sounds---
 def play_sound_async(sound):
@@ -965,9 +964,12 @@ def play_sound(sound):
         print("Play sound error:", e)
 
 # -Startup Sound-
-    #removed for the sake of my sanity while testing
-
-
+if __name__ == "__main__":
+    play_sound(SOUND_CORRECT)
+    time.sleep(0.4)
+    play_sound(SOUND_WRONG)
+    time.sleep(0.4)
+    play_sound(SOUND_WIN)
 
 #----Start mit Menü----
 screen_menu.tkraise()

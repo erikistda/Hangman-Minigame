@@ -8,8 +8,6 @@ import threading
 import time
 import winsound
 from tkinter import font
-from turtle import back
-from importlib import reload
 from tkinter import messagebox
 
 SOUNDS_DIR = os.path.join(os.path.dirname(__file__), "Sounds")
@@ -82,7 +80,7 @@ def go_back():
 
     #--Zeigt den Game Screen und die Themenauswahl an, um ein neues Spiel zu starten.--
 def show_selection():
-    global auswahl_aktiv
+    global auswahl_aktiv, leben
 
     # -1. Vorheriges Spiel aufräumen-
     hide_endgame_buttons()
@@ -317,7 +315,7 @@ def check_letter(key):
         stop_timer()
         word_label.config(text=f"Verloren! Das Wort war {geheime_wort}")
         play_sound_async(SOUND_LOSE)
-        threading.Timer(1.0, show_retry_button()).start() # Warte 4 Sekunden und zeige dann den Retry Button an
+        threading.Timer(0.75, show_retry_button).start() # Warte 0.75 Sekunden und zeige dann den Retry Button an
     elif all(c in erratene_buchstaben for c in geheime_wort):
         stop_timer()
         word_label.config(text="🎉 Gewonnen! Das Wort war " + geheime_wort)
@@ -325,8 +323,9 @@ def check_letter(key):
         elapsed_time = time.time() - timer_start_time
         global last_time_ms
         last_time_ms = int(elapsed_time * 1000) # Speichern der Zeit in Millisekunden
-        show_endgame_buttons()
+        threading.Timer(0.5, show_endgame_buttons).start()
 # --Speicherung des Highscores--
+
 # --Fügt den neuen Score zur globalen Liste hinzu und speichert sie.--
 def save_score(name, time_ms, category):
     global highscores
@@ -386,7 +385,7 @@ def show_name_input_popup():
     tk.Button(popup, text="Speichern", command=submit_score).pack(pady=10)
      
 
-# -(Retry + Save)-
+# --(Retry + Save)--
 def show_retry_button():
     #-Platziert nur den Retry Button (z.B. nach dem Verlieren).-
     btn_retry.place(relx=0.5, rely=0.53, anchor='center')
@@ -423,8 +422,7 @@ timer_running = False
 timer_start_time = 0.0
 timer_job = None 
 last_time_ms = 0
-# -Label für die Timer-Anzeige-
-timer_label = tk.Label(screen_game, text="00:00:000", font=("Arial", font_size3), bg=game_colour)
+
 # -Retry Button-
 btn_retry = tk.Button(screen_game, text="🔄", font=("Arial", font_size5),
                      command=show_selection,
@@ -753,7 +751,7 @@ HIGHSCORE_FILE = "highscores.json"
 
 def load_highscores():
     global themen_woerter
-    """Lädt Highscores aus der JSON-Datei."""
+    #-Lädt Highscores aus der JSON-Datei.-
     if os.path.exists(HIGHSCORE_FILE):
         with open(HIGHSCORE_FILE, 'r') as f:
             try:
@@ -763,7 +761,7 @@ def load_highscores():
                 return {k: [] for k in themen_woerter.keys()}
     return {k: [] for k in themen_woerter.keys()}
 
-#Speichert Highscores in der JSON-Datei.
+#-Speichert Highscores in der JSON-Datei.-
 def save_highscores(scores):
     with open(HIGHSCORE_FILE, 'w') as f:
         json.dump(scores, f, indent=4)
@@ -796,7 +794,7 @@ clear_all_button = tk.Button(
 clear_all_button.place(x=400, y=20)
 
 def clear_all_highscores():
-    """Löscht alle Highscores in der aktuellen Kategorie nach Bestätigung."""
+    # -Löscht alle Highscores in der aktuellen Kategorie nach Bestätigung.-
     current_category = kategorien[kategorie_index]
     if not highscores.get(current_category):
         messagebox.showinfo("Info", f"Keine Einträge in {current_category} zum Löschen.")
@@ -817,7 +815,7 @@ highscore_list_frame.pack(pady=10, fill="both", expand=True)
 
 # --Einzelne Highscore löschen Funktion--
 def delete_single_highscore(category, index):
-    """Löscht einen einzelnen Highscore aus der gegebenen Kategorie und aktualisiert Anzeige + Datei."""
+    # -Löscht einen einzelnen Highscore aus der gegebenen Kategorie und aktualisiert Anzeige + Datei.-
     global highscores
     if category not in highscores:
         return
@@ -827,7 +825,7 @@ def delete_single_highscore(category, index):
         update_highscores_display()
 
 def update_highscores_display():
-    """Highscore-Liste mit Abstand zwischen den Zeilen und 🗑️ rechts."""
+    # -Highscore-Liste mit Abstand zwischen den Zeilen und 🗑️ rechts.-
     for widget in scrollable_frame.winfo_children():
         widget.destroy()
 
@@ -926,7 +924,7 @@ def show_highscores_screen():
     update_highscores_display()
     screen_highscores.tkraise()
 
-# -4. Ersetze den alten Command des Highscore-Buttons (im Menü, ca. Zeile 163)-
+# -4. Ersetze den alten Command des Highscore-Buttons-
 btn_highscores.config(command=show_highscores_screen)
 
 # ---Sounds---

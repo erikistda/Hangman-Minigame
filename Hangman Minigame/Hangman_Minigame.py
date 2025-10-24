@@ -87,6 +87,12 @@ def go_back():
 def show_selection():
     global auswahl_aktiv, leben
 
+    # -Pfeiltasten aktivieren-
+    root.unbind("<Left>")
+    root.unbind("<Right>")
+    root.bind("<Left>", prev_kategorie)
+    root.bind("<Right>", next_kategorie)
+
     # -1. Vorheriges Spiel aufräumen-
     hide_endgame_buttons()
     btn_retry.place_forget() 
@@ -354,6 +360,12 @@ def show_name_input_popup():
     #-Öffnet ein TopLevel-Fenster zur Eingabe des Namens.-
     hide_endgame_buttons() # Buttons im Hintergrund ausblenden
     
+    # -Pfeiltasten für Highscore Screen aktivieren-
+    root.unbind("<Left>")
+    root.unbind("<Right>")
+    root.bind("<Left>", prev_highscore_category)
+    root.bind("<Right>", next_highscore_category)
+
     popup = tk.Toplevel(root)
     popup.title("Highscore speichern")
     # -Positioniere das Fenster mittig (einfache Methode)-
@@ -965,7 +977,6 @@ def show_highscores_screen():
     # -Alte Tastaturbindungen (vom Spiel) entfernen-
     root.unbind("<Left>")
     root.unbind("<Right>")
-    
     # -Highscore-Tasten aktivieren-
     root.bind("<Left>", prev_highscore_category)
     root.bind("<Right>", next_highscore_category)

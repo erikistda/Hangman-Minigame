@@ -1,10 +1,6 @@
 {
     "L\u00e4nder": [
         {
-            "name": "test3",
-            "time_ms": 13315
-        },
-        {
             "name": "USA",
             "time_ms": 2214
         },
@@ -13,8 +9,16 @@
             "time_ms": 6544
         },
         {
+            "name": "test5",
+            "time_ms": 9897
+        },
+        {
             "name": "Bentiger",
             "time_ms": 9953
+        },
+        {
+            "name": "test3",
+            "time_ms": 13315
         }
     ],
     "Hauptst\u00e4dte": [
@@ -26,5 +30,11 @@
     "Tiere": [],
     "Informatik": [],
     "Elemente": [],
-    "Dinosaurier": []
+    "Dinosaurier": [],
+    "Games": [
+        {
+            "name": "test6",
+            "time_ms": 7843
+        }
+    ]
 }

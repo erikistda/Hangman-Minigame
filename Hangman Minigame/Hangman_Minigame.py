@@ -385,17 +385,18 @@ def show_name_input_popup():
 
 # -(Retry + Save)-
 def show_retry_button():
-    """Platziert nur den Retry Button (z.B. nach dem Verlieren)."""
+    #-Platziert nur den Retry Button (z.B. nach dem Verlieren).-
     btn_retry.place(relx=0.5, rely=0.53, anchor='center')
 def show_endgame_buttons():
-    """Platziert Retry und Save Button über der Tastatur."""
+    #-Platziert Retry und Save Button über der Tastatur.-
     btn_retry.place(relx=0.45, rely=0.53, anchor='center')
     btn_save_score.place(relx=0.55, rely=0.53, anchor='center')
 
 def hide_endgame_buttons():
-    """Blendet die Buttons aus."""
+    #-Blendet die Buttons aus.-
     btn_retry.place_forget()
     btn_save_score.place_forget()
+
 
 # -Themen mit Wörtern-
 themen_woerter = {

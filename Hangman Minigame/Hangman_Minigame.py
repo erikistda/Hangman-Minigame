@@ -261,7 +261,6 @@ word_label = tk.Label(screen_game, text="", font=("Courier", font_size4), bg="#A
 word_label.pack(pady=10)
 hearts_label = tk.Label(screen_game, text="", font=("Arial", font_size2), bg="#AAC1D2") # Herzen
 help_button = tk.Button(screen_game, text="❓", font=("Arial", font_size2), command=show_name_input_popup)
-help_button.place(x=(screen_width - 80), y=20)
 
 def update_hearts():
     hearts_label.config(text="❤️ " * leben)
@@ -543,6 +542,9 @@ def start_game(event=None):
     timer_running = True
     update_timer()
     timer_label.place(relx=1.0, rely=0.0, x=-20, y=20, anchor='ne') # Zeigt den Timer unter dem back-Button an
+
+    # -Help Button anzeigen-
+    help_button.place(x=(screen_width - 80), y=80)
     
     geheime_wort = random.choice(themen_woerter[kategorien[kategorie_index]])
     erratene_buchstaben = set()

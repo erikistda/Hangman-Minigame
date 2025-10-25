@@ -1,4 +1,5 @@
 from importlib import reload
+from multiprocessing import current_process
 import tkinter as tk
 import string
 import json
@@ -52,12 +53,14 @@ screen_game = tk.Frame(root,bg=game_colour)
 screen_settings = tk.Frame(root,bg=screen_colour)
 screen_highscores = tk.Frame(root,bg=screen_colour)
 
+current_screen = "menu"
+
 for frame in (screen_menu,screen_game,screen_settings,screen_highscores):
     frame.place(relwidth=1,relheight=1)
 
 #--Zurück Funktion--
 def go_back():
-    global auswahl_aktiv,leben
+    global auswahl_aktiv,leben, current_screen
     
     # -1. Timer stoppen und ausblenden-
     stop_timer() 
@@ -77,6 +80,7 @@ def go_back():
     
     # -Zurück zum Hauptmenü-
     screen_menu.tkraise()
+    current_screen = "menu"
 
     # Nach Rückkehr ins Menü: alte Pfeiltasten-Bindings wiederherstellen
     root.unbind("<Left>")
@@ -85,7 +89,9 @@ def go_back():
     root.bind("<Right>", next_kategorie)
 
 def show_selection():
-    global auswahl_aktiv, leben
+    global auswahl_aktiv, leben, current_screen
+
+    current_screen = "category_select"
 
     # -Pfeiltasten aktivieren-
     root.unbind("<Left>")
@@ -176,12 +182,12 @@ menu_canvas.create_line(
     fill="black", width=2
 )
 
-btn_spielen=tk.Button(screen_menu,text="PLAY",font=("Arial",font_size2),width=15,
+btn_spielen=tk.Button(screen_menu,text="   PLAY ⏎",font=("Arial",font_size2),width=15,
                       command=show_selection)
 btn_spielen.pack(pady=10)
 
 btn_einstellungen=tk.Button(screen_menu,text="SETTINGS",font=("Arial",font_size2),width=15,
-                      command=lambda:screen_settings.tkraise())
+                      command=lambda:show_settings())
 btn_einstellungen.pack(pady=10)
 
 btn_highscores=tk.Button(screen_menu,text="HIGHSCORES",font=("Arial",font_size2),width=15,
@@ -498,7 +504,11 @@ def handle_enter(event):
         show_selection()
         return
 
-    if auswahl_aktiv:
+    if current_screen == "menu":
+        show_selection()
+        return
+
+    if current_screen == "category_select" and auswahl_aktiv:
         start_game()
 
 # --Spiel Start--
@@ -549,6 +559,10 @@ root.bind("<Return>", handle_enter)
 
 
 # ---SETTINGS-Screen---
+def show_settings():
+    global current_screen
+    screen_settings.tkraise()
+    current_screen = "settings"
 settings_label = tk.Label(screen_settings, text="Einstellungen", font=("Arial", font_size3), bg=screen_colour)
 settings_label.pack(pady=50)
 settings_back_button = tk.Button(screen_settings, text="← BACK", font=("Arial", font_size1), command=go_back)
@@ -974,6 +988,7 @@ canvas_hs.pack(side="left", fill="both", expand=True, padx=20)
 
 # --Aktualisierung der Anzeige beim Öffnen des Highscore-Screens--
 def show_highscores_screen():
+    global current_screen
     # -Alte Tastaturbindungen (vom Spiel) entfernen-
     root.unbind("<Left>")
     root.unbind("<Right>")
@@ -983,6 +998,8 @@ def show_highscores_screen():
     
     update_highscores_display()
     screen_highscores.tkraise()
+    current_screen = "highscores"
+
 
 # -4. Ersetze den alten Command des Highscore-Buttons-
 btn_highscores.config(command=show_highscores_screen)

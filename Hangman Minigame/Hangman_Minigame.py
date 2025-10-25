@@ -36,6 +36,7 @@ game_row_frames = []
 erster_loesch_knopf = False
 anzahl_loesch_knöpfe = 0
 
+
 # ---Window setup---
 def on_escape(event=None):
     root.destroy()
@@ -53,6 +54,8 @@ screen_settings = tk.Frame(root,bg=screen_colour)
 screen_highscores = tk.Frame(root,bg=screen_colour)
 
 current_screen = "menu"
+screen_width = root.winfo_screenwidth()
+screen_height = root.winfo_screenheight()
 
 for frame in (screen_menu,screen_game,screen_settings,screen_highscores):
     frame.place(relwidth=1,relheight=1)
@@ -234,12 +237,31 @@ def update_word_display():
     ])
     word_label.config(text=display)
 
+def show_name_input_popup():
+    global screen_height, screen_width
+
+    popup = tk.Toplevel(root)
+    popup.title("Help")
+    # -Positioniere das Fenster mittig-
+    window_width = 600
+    window_height = 180
+
+    center_x = int(screen_width/2 - window_width/2)
+    center_y = int(screen_height/2 - window_height/2)
+    popup.geometry(f'{window_width}x{window_height}+{center_x}+{center_y}')
+    popup.resizable(False, False)
+    popup.grab_set() # Blockiert Interaktion mit dem Hauptfenster
+    
+    tk.Label(popup, text="Drücke auf der Tastatur einen Bcuhstaben, sollte dieser im Wort vorhanden sein, wird er grün und auf der gestrichelten linie wird angezeigt, wo er sich im wort befindet. Ansonsten wird er Rot. Nachdem du einen Buchstaben gedrückt hast, kannst du ihn nicht nocheinmal eingeben.", wraplength=550, justify="left", font=("Arial", 16)).pack(pady=10)
+
 
 game_back_button = tk.Button(screen_game, text="← BACK", font=("Arial", font_size1), command=go_back)
 game_back_button.place(x=20, y=20)
 word_label = tk.Label(screen_game, text="", font=("Courier", font_size4), bg="#AAC1D2") # Wortanzeige 
 word_label.pack(pady=10)
 hearts_label = tk.Label(screen_game, text="", font=("Arial", font_size2), bg="#AAC1D2") # Herzen
+help_button = tk.Button(screen_game, text="❓", font=("Arial", font_size2), command=show_name_input_popup)
+help_button.place(x=(screen_width - 80), y=20)
 
 def update_hearts():
     hearts_label.config(text="❤️ " * leben)
@@ -362,6 +384,7 @@ def save_score(name, time_ms, category):
     update_highscores_display() 
 
 def show_name_input_popup():
+    global screen_height, screen_width
     #-Öffnet ein TopLevel-Fenster zur Eingabe des Namens.-
     hide_endgame_buttons() # Buttons im Hintergrund ausblenden
     
@@ -376,8 +399,6 @@ def show_name_input_popup():
     # -Positioniere das Fenster mittig (einfache Methode)-
     window_width = 300
     window_height = 150
-    screen_width = root.winfo_screenwidth()
-    screen_height = root.winfo_screenheight()
     center_x = int(screen_width/2 - window_width/2)
     center_y = int(screen_height/2 - window_height/2)
     popup.geometry(f'{window_width}x{window_height}+{center_x}+{center_y}')
@@ -409,7 +430,7 @@ def show_name_input_popup():
 
 # --(Retry + Save)--
 def show_retry_button():
-    #-Platziert nur den Retry Button (z.B. nach dem Verlieren).-
+    #-Platziert nur den Retry Button.-
     btn_retry.place(relx=0.5, rely=0.53, anchor='center')
 def show_endgame_buttons():
     #-Platziert Retry und Save Button über der Tastatur.-

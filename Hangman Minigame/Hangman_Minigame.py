@@ -631,11 +631,20 @@ def change_text_size():
     settings_back_button.config(font=("Arial", font_size1))
     size_button.config(text=current_font_size, font=("Arial", font_size3))
     size_button_identifier.config(font=("Arial", font_size2))
+    background_titel1.config(font=("Arial", font_size2))
+    background_titel2.config(font=("Arial", font_size2))
+    background_titel3.config(font=("Arial", font_size2))
+    size_button_identifier.config(font=("Arial", font_size2))
     
     # -Settings - Highscore Screen-
     highscore_label.config(font=("Arial", font_size3))
     highscore_back_button.config(font=("Arial", font_size1))
     highscore_kategorie_label.config(font=("Arial", font_size2))
+    btn_highscore_links.config(font=("Arial", font_size4))
+    btn_highscore_rechts.config(font=("Arial", font_size4))
+    highscore_kategorie_label.config(font=("Arial", font_size2))
+    clear_all_button.config(font=("Arial", font_size1))
+    update_highscores_display()  # Rebuilds header + entries with new font sizes
     update_highscores_display()
 
     # -Settings - Game Screen-
@@ -643,6 +652,12 @@ def change_text_size():
     word_label.config(font=("Courier", font_size4))
     hearts_label.config(font=("Arial", font_size2))
     timer_label.config(font=("Arial", font_size3))
+    btn_retry.config(font=("Arial", font_size5))
+    btn_save_score.config(font=("Arial", font_size5))
+    hearts_label.config(font=("Arial", font_size2))
+    btn_links.config(font=("Arial", font_size5))
+    btn_rechts.config(font=("Arial", font_size5))
+    auswahl_label.config(font=("Arial", font_size4, "bold"))
     
     # -Settings - Menu Screen-
     btn_spielen.config(font=("Arial", font_size2))
@@ -687,6 +702,12 @@ def all_redos():
     highscore_control_frame.config(bg=screen_colour)
     highscore_kategorie_label.config(bg=screen_colour)
     highscore_list_frame.config(bg=screen_colour)
+    btn_highscore_links.config(bg=screen_colour)
+    btn_highscore_rechts.config(bg=screen_colour)
+    highscore_kategorie_frame.config(bg=screen_colour)
+    scrollable_frame.config(bg=screen_colour)
+    canvas_hs.config(bg=screen_colour)
+    scrollbar.config(bg=screen_colour, troughcolor=screen_colour, activebackground=screen_colour)
     canvas_hs.config(bg=screen_colour)
     # -Menu Screen-
     screen_menu.config(bg=menu_colour)

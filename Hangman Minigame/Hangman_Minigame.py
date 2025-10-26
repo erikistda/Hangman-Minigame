@@ -32,6 +32,7 @@ menu_colour = standard_background_clours[0]
 game_colour = standard_background_clours[1]
 screen_colour = standard_background_clours[2]
 
+spiel_aktiv = True
 game_row_frames = []
 erster_loesch_knopf = False
 anzahl_loesch_knöpfe = 0
@@ -72,6 +73,7 @@ def go_back():
     # -2. Spielzustand zurücksetzen und Auswahl wiederherstellen-
     auswahl_frame.place(relx=0.5, rely=0.55, anchor="center") 
     auswahl_aktiv = True 
+    spiel_aktiv = False
     leben = 6
     update_hearts()
     word_label.config(text="")
@@ -91,9 +93,10 @@ def go_back():
     root.bind("<Right>", next_kategorie)
 
 def show_selection():
-    global auswahl_aktiv, leben, current_screen
+    global auswahl_aktiv, leben, current_screen, spiel_aktiv
 
     current_screen = "category_select"
+    spiel_aktiv = True
 
     # -Pfeiltasten aktivieren-
     root.unbind("<Left>")
@@ -328,7 +331,9 @@ for row in layout:
 
 # -- Buchstaben überprüfen --
 def check_letter(key):
-    global leben
+    global leben, spiel_aktiv
+    if not spiel_aktiv:
+        return
     if not geheime_wort or leben <= 0:
         return
     if key in erratene_buchstaben:
@@ -350,11 +355,13 @@ def check_letter(key):
     # -gewonnen oder verloren-
     if leben == 0:
         stop_timer()
+        spiel_aktiv = False
         word_label.config(text=f"Verloren! Das Wort war {geheime_wort}")
         play_sound_async(SOUND_LOSE)
         threading.Timer(0.75, show_retry_button).start() # Warte 0.75 Sekunden und zeige dann den Retry Button an
     elif all(c in erratene_buchstaben for c in geheime_wort):
         stop_timer()
+        spiel_aktiv = False
         word_label.config(text="🎉 Gewonnen! Das Wort war " + geheime_wort)
         play_sound_async(SOUND_WIN)
         elapsed_time = time.time() - timer_start_time

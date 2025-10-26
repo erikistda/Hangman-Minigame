@@ -255,7 +255,7 @@ def show_name_input_popup():
     popup.resizable(False, False)
     popup.grab_set() # Blockiert Interaktion mit dem Hauptfenster
     
-    tk.Label(popup, text="Drücke auf der Tastatur einen Bcuhstaben, sollte dieser im Wort vorhanden sein, wird er grün und auf der gestrichelten linie wird angezeigt, wo er sich im wort befindet. Ansonsten wird er Rot. Nachdem du einen Buchstaben gedrückt hast, kannst du ihn nicht nocheinmal eingeben.", wraplength=550, justify="left", font=("Arial", 16)).pack(pady=10)
+    tk.Label(popup, text="Drücke auf der Tastatur einen Buchstaben, sollte dieser im Wort vorhanden sein, wird er grün und auf der gestrichelten linie wird angezeigt, wo er sich im wort befindet. Ansonsten wird er Rot. Nachdem du einen Buchstaben gedrückt hast, kannst du ihn nicht nocheinmal eingeben.", wraplength=550, justify="left", font=("Arial", 16)).pack(pady=10)
 
 
 game_back_button = tk.Button(screen_game, text="← BACK", font=("Arial", font_size1), command=go_back)

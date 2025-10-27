@@ -1,6 +1,16 @@
 {
     "L\u00e4nder": [
         {
+            "name": "test10",
+            "time_ms": 1854,
+            "score": 43137
+        },
+        {
+            "name": "test9",
+            "time_ms": 8196,
+            "score": 8133
+        },
+        {
             "name": "USA",
             "time_ms": 2214
         },

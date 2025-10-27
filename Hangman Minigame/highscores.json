@@ -1,12 +1,46 @@
 {
     "L\u00e4nder": [
         {
-            "name": "USA",
-            "time_ms": 2214
+            "name": "test10",
+            "time_ms": 1854,
+            "score": 43137
         },
         {
-            "name": "benj - Algerien",
-            "time_ms": 3603
+            "name": "test13",
+            "time_ms": 4813,
+            "score": 16158,
+            "word": "GUATEMALA",
+            "hearts_left": 4
+        },
+        {
+            "name": "test12",
+            "time_ms": 6276,
+            "score": 8850,
+            "word": "NEPAL",
+            "hearts_left": 2
+        },
+        {
+            "name": "test9",
+            "time_ms": 8196,
+            "score": 8133
+        },
+        {
+            "name": "test11",
+            "time_ms": 13957,
+            "score": 4408,
+            "word": "JORDANIEN",
+            "hearts_left": 1
+        },
+        {
+            "name": "test12",
+            "time_ms": 80791,
+            "score": 1237,
+            "word": "UKRAINE",
+            "hearts_left": 6
+        },
+        {
+            "name": "USA",
+            "time_ms": 2214
         },
         {
             "name": "test6",
@@ -19,18 +53,6 @@
         {
             "name": "Benj",
             "time_ms": 9426
-        },
-        {
-            "name": "test5",
-            "time_ms": 9897
-        },
-        {
-            "name": "Bentiger",
-            "time_ms": 9953
-        },
-        {
-            "name": "test3",
-            "time_ms": 13315
         }
     ],
     "Hauptst\u00e4dte": [
@@ -45,8 +67,25 @@
     "Dinosaurier": [],
     "Games": [
         {
-            "name": "test6",
-            "time_ms": 7843
+            "name": "Nik",
+            "time_ms": 8822,
+            "score": 11335,
+            "word": "LEAGUE OF LEGENDS",
+            "hearts_left": 6
+        },
+        {
+            "name": "tes112",
+            "time_ms": 22792,
+            "score": 3133,
+            "word": "LEAGUE OF LEGENDS",
+            "hearts_left": 2
+        },
+        {
+            "name": "Alle 3",
+            "time_ms": 92827,
+            "score": 807,
+            "word": "HOGWARTS LEGACY",
+            "hearts_left": 2
         }
     ]
 }

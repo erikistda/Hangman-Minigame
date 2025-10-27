@@ -329,18 +329,18 @@ for row in layout:
         lbl.pack(side="left", padx=3, pady=3)
         keys[char] = lbl
 
-# -- Buchstaben überprüfen --
 def check_letter(key):
-    global leben, spiel_aktiv
+    global leben, spiel_aktiv, wrong_tries, total_guesses
     if not spiel_aktiv:
         return
     if not geheime_wort or leben <= 0:
         return
     if key in erratene_buchstaben:
         return
+
+    total_guesses += 1   # jeder gedrückte Buchstabe zählt als Versuch
     erratene_buchstaben.add(key)
 
-    # -Richtiger oder falscher Buchstabe-
     if key in geheime_wort:
         keys[key].config(bg="#9fff9f")
         play_sound_async(SOUND_CORRECT)
@@ -348,46 +348,79 @@ def check_letter(key):
         keys[key].config(bg="#ff9f9f")
         play_sound_async(SOUND_WRONG)
         leben -= 1
+        wrong_tries += 1   # nur falsche Versuche erhöhen diesen Zähler
         draw_hangman_stage()
         update_hearts()
     update_word_display()
 
-    # -gewonnen oder verloren-
+    # -Verloren-
     if leben == 0:
         stop_timer()
         spiel_aktiv = False
         word_label.config(text=f"Verloren! Das Wort war {geheime_wort}")
         play_sound_async(SOUND_LOSE)
-        threading.Timer(0.75, show_retry_button).start() # Warte 0.75 Sekunden und zeige dann den Retry Button an
+        threading.Timer(0.75, show_retry_button).start()
+    # -Gewonnen-
     elif all(c in erratene_buchstaben for c in geheime_wort):
         stop_timer()
         spiel_aktiv = False
         word_label.config(text="🎉 Gewonnen! Das Wort war " + geheime_wort)
         play_sound_async(SOUND_WIN)
+
         elapsed_time = time.time() - timer_start_time
-        global last_time_ms
-        last_time_ms = int(elapsed_time * 1000) # Speichern der Zeit in Millisekunden
+        global last_time_ms, last_score
+
+        last_time_ms = int(elapsed_time * 1000)  # bestehendes Zeit-Tracking (ms)
+
+        # ---------- Score-Berechnung (normalisiert nach eindeutigen Buchstaben) ----------
+        # normalized_wrong in [0, inf). Wenn wrong_tries = 0 -> normalized_wrong = 0.
+        try:
+            normalized_wrong = wrong_tries / max(1, unique_letter_count)
+        except NameError:
+            normalized_wrong = wrong_tries / 1
+
+        # Multiplier: je mehr Fehler relativ zur Wortkomplexität, desto kleiner der Faktor.
+        # (1 / (1 + normalized_wrong)) liefert z.B.:
+        #  - 0 Fehler -> 1.0
+        #  - same number errors wie unique letters -> 0.5
+        multiplier = 1.0 / (1.0 + normalized_wrong)
+
+        # Basierend auf Zeit (s) skaliert: kürzere Zeit -> größere Basis
+        time_seconds = max(0.001, elapsed_time)  # Division durch 0 verhindern
+
+        # Basisskala (du kannst 100000 anpassen, je wie groß du Scores magst)
+        base = 100000.0 / time_seconds
+
+        # Endscore (mindestens 1)
+        last_score = max(1, int(base * multiplier))
+
         threading.Timer(0.5, show_endgame_buttons).start()
+
 # --Speicherung des Highscores--
 
 # --Fügt den neuen Score zur globalen Liste hinzu und speichert sie.--
 def save_score(name, time_ms, category):
-    global highscores
+    global highscores, last_score, geheime_wort, leben
     
-    # -Sicherstellen, dass die Kategorie existiert-
     if category not in highscores:
         highscores[category] = []
         
     highscores[category].append({
         "name": name,
-        "time_ms": time_ms
+        "time_ms": time_ms,
+        "score": last_score,
+        "word": geheime_wort,
+        "hearts_left": leben
     })
     
-    highscores[category].sort(key=lambda x: x["time_ms"])
-    highscores[category] = highscores[category][:50] # Beschränkung der Nummer an Highscores pro Kategorie
+    # Sortiere nach Score (höher ist besser)
+    highscores[category].sort(key=lambda x: x.get("score", 0), reverse=True)
+    highscores[category] = highscores[category][:50]
     
-    save_highscores(highscores) 
-    update_highscores_display() 
+    save_highscores(highscores)
+    update_highscores_display()
+
+
 
 def show_name_input_popup():
     global screen_height, screen_width
@@ -540,17 +573,17 @@ def handle_enter(event):
 # --Spiel Start--
 def start_game(event=None):
     global geheime_wort, erratene_buchstaben, leben, auswahl_aktiv, timer_start_time, timer_running
-    
+    global wrong_tries, total_guesses, unique_letter_count, last_score
+
     auswahl_aktiv = False
     auswahl_frame.place_forget()
     
-    # -Timer starten und anzeigen-
+    # --Timer starten --
     timer_start_time = time.time()
     timer_running = True
     update_timer()
-    timer_label.place(relx=1.0, rely=0.0, x=-20, y=20, anchor='ne') # Zeigt den Timer unter dem back-Button an
+    timer_label.place(relx=1.0, rely=0.0, x=-20, y=20, anchor='ne')
 
-    # -Help Button anzeigen-
     help_button.place(x=(screen_width - 80), y=80)
     
     geheime_wort = random.choice(themen_woerter[kategorien[kategorie_index]])
@@ -558,6 +591,16 @@ def start_game(event=None):
     erratene_buchstaben.update(" ", "-")
     leben = 6
 
+    # --- Neue Variablen für Versuche / Normalisierung ---
+    wrong_tries = 0        # nur falsche Versuche zählen
+    total_guesses = 0      # alle Versuche (optional, wenn du's brauchst)
+    # Anzahl eindeutiger Alphabete im Wort (z.B. "USA" -> 3, "TSCHECHISCHE REPUBLIK" -> unique letters)
+    unique_letter_count = len(set([c for c in geheime_wort if c.isalpha()]))
+    if unique_letter_count == 0:
+        unique_letter_count = 1
+
+    last_score = 0  # Default
+    
     update_word_display()
     draw_gallows()
     hearts_label.pack()
@@ -908,80 +951,93 @@ def delete_single_highscore(category, index):
         update_highscores_display()
 
 def update_highscores_display():
-    # -Highscore-Liste mit Abstand zwischen den Zeilen und 🗑️ rechts.-
-    for widget in scrollable_frame.winfo_children():
+    global highscores, kategorie_index
+
+    # Kategorie-Label aktualisieren
+    try:
+        highscore_kategorie_label.config(text=f"Kategorie: {kategorien[kategorie_index]}")
+    except Exception:
+        pass
+
+    for widget in highscore_list_frame.winfo_children():
         widget.destroy()
 
-    current_category = kategorien[kategorie_index]
-    highscore_kategorie_label.config(text=f"Kategorie: {current_category}")
-    scores = highscores.get(current_category, [])
+    category = kategorien[kategorie_index]
+    scores = highscores.get(category, [])
 
-    # -Header-
-    header = tk.Frame(scrollable_frame, bg=screen_colour)
-    header.pack(fill="x", padx=40, pady=(0, 5))
-    tk.Label(header, text="Platz", font=("Courier", font_size2, "bold"),
-             bg=screen_colour, anchor="w", width=6).grid(row=0, column=0, sticky="w")
-    tk.Label(header, text="Name", font=("Courier", font_size2, "bold"),
-             bg=screen_colour, anchor="w", width=24).grid(row=0, column=1, sticky="w")
-    tk.Label(header, text="Zeit (mm:ss:ms)", font=("Courier", font_size2, "bold"),
-             bg=screen_colour, anchor="w", width=18).grid(row=0, column=2, sticky="w", padx=(40, 0))
-    tk.Label(header, text="", bg=screen_colour, width=3).grid(row=0, column=3)
+    # Hauptcontainer für Tabelle
+    table = tk.Frame(highscore_list_frame, bg=screen_colour)
+    table.pack(fill="x", padx=60, pady=(5, 0))
 
-    for i, score in enumerate(scores):
-        # -Abwechselnde Zeilenfarben-
-        bg_color = "#ffffff" if i % 2 == 0 else "#f2f0ef"
+    # Spaltenkonfiguration
+    table.grid_columnconfigure(0, minsize=50)   # Platz
+    table.grid_columnconfigure(1, minsize=180)  # Name
+    table.grid_columnconfigure(2, minsize=150)  # Zeit
+    table.grid_columnconfigure(3, minsize=100)  # Score
+    table.grid_columnconfigure(4, minsize=90)   # Herzen
+    table.grid_columnconfigure(5, minsize=200)  # Wort
+    table.grid_columnconfigure(6, minsize=60)   # Delete
 
-        # -Äußerer Rahmen in Hintergrundfarbe-
-        outer_frame = tk.Frame(scrollable_frame, bg=screen_colour)
-        outer_frame.pack(fill="x", padx=40, pady=(2, 3))  
+    # ----- Header -----
+    headers = ["Platz", "Name", "Zeit (mm:ss:ms)", "Score", "❤", "Wort", ""]
+    aligns = ["w", "w", "e", "e", "center", "w", "e"]
 
-        # -Innerer Frame = eigentliche Zeile-
-        row = tk.Frame(outer_frame, bg=bg_color)
-        row.pack(fill="x", padx=0, pady=0, ipadx=0, ipady=0)
+    for col, (title, align) in enumerate(zip(headers, aligns)):
+        tk.Label(
+            table,
+            text=title,
+            font=("Courier", font_size2, "bold"),
+            bg=screen_colour,
+            anchor=align
+        ).grid(row=0, column=col, sticky="ew", padx=(2, 6), pady=(0, 4))
 
-        # -Zeit berechnen-
-        time_ms = score.get("time_ms", 0)
-        total_seconds = time_ms / 1000
-        minutes = int(total_seconds // 60)
-        seconds = int(total_seconds % 60)
-        milliseconds = int(time_ms % 1000)
-        time_str = f"{minutes:02d}:{seconds:02d}:{milliseconds:03d}"
+    # ----- Datenzeilen -----
+    for i, entry in enumerate(scores):
+        bg_color = "#ffffff" if i % 2 == 0 else "#f1ebe9"
 
-        # -Spaltenlayout-
-        row.grid_columnconfigure(0, weight=0)
-        row.grid_columnconfigure(1, weight=1)
-        row.grid_columnconfigure(2, weight=0)
-        row.grid_columnconfigure(3, weight=0)
+        # Platz
+        tk.Label(table, text=f"{i+1}.", font=("Courier", font_size1),
+                 bg=bg_color, anchor="w").grid(row=i+1, column=0, sticky="w", padx=(2, 6), pady=4)
 
-        # -Platz-
-        tk.Label(row, text=f"{i+1}.", font=("Courier", font_size1),
-                 bg=bg_color, width=5, anchor="w").grid(row=0, column=0, sticky="w", padx=(10, 10), pady=6)
+        # Name
+        tk.Label(table, text=entry.get("name", ""), font=("Courier", font_size1),
+                 bg=bg_color, anchor="w").grid(row=i+1, column=1, sticky="w", padx=(2, 6))
 
-        # -Name-
-        tk.Label(row, text=score.get("name", ""), font=("Courier", font_size1),
-                 bg=bg_color, anchor="w").grid(row=0, column=1, sticky="we", pady=6)
+        # Zeit formatieren
+        time_ms = entry.get("time_ms", 0)
+        minutes = int(time_ms / 60000)
+        seconds = int((time_ms % 60000) / 1000)
+        millis = int(time_ms % 1000)
+        time_str = f"{minutes:02}:{seconds:02}:{millis:03}"
+        tk.Label(table, text=time_str, font=("Courier", font_size1),
+                 bg=bg_color, anchor="e").grid(row=i+1, column=2, sticky="e", padx=(2, 6))
 
-        # -Zeit-
-        tk.Label(row, text=time_str, font=("Courier", font_size1),
-                 bg=bg_color, width=18, anchor="e").grid(row=0, column=2, sticky="e", padx=(50, 5), pady=6)
+        # Score
+        tk.Label(table, text=str(entry.get("score", 0)), font=("Courier", font_size1),
+                 bg=bg_color, anchor="e").grid(row=i+1, column=3, sticky="e", padx=(2, 6))
 
-        # -🗑️ Lösch-Button-
-        delete_btn = tk.Button(
-            row,
-            text="🗑️",
-            font=("Segoe UI Emoji", font_size1 + 2),
-            bg="#ff6666",
-            fg="white",
-            relief="raised",
-            width=2,
-            height=1,
-            pady=-1,
-            command=lambda idx=i, cat=current_category: delete_single_highscore(cat, idx)
-        )
-        delete_btn.grid(row=0, column=3, sticky="e", padx=(8, 12), pady=4)
+        # Herzen (Symbole)
+        hearts = entry.get("hearts_left", 0)
+        hearts_str = "❤️" * hearts if hearts > 0 else "—"
+        tk.Label(table, text=hearts_str, font=("Courier", font_size1),
+                 bg=bg_color, anchor="center").grid(row=i+1, column=4, sticky="nsew", padx=(2, 6))
 
+        # Wort
+        tk.Label(table, text=entry.get("word", ""), font=("Courier", font_size1),
+                 bg=bg_color, anchor="w").grid(row=i+1, column=5, sticky="w", padx=(2, 6))
 
-    canvas_hs.update_idletasks()
+        # Lösch-Button
+        delete_btn = tk.Button(table, text="🗑️", font=("Arial", font_size1),
+                               bg="#ff6666", fg="white", relief="flat",
+                               command=lambda idx=i:  delete_single_highscore(category, idx))
+        delete_btn.grid(row=i+1, column=6, sticky="e", padx=(2, 6), pady=2)
+
+    # Gleichmäßige Spaltenausdehnung
+    for c in range(7):
+        table.grid_columnconfigure(c, weight=1)
+
+    highscore_list_frame.update_idletasks()
+
 
 # -- Kategorie-Wechsel im Highscore-Screen --
 

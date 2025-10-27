@@ -748,7 +748,7 @@ def all_redos():
     btn_highscore_links.config(bg=screen_colour)
     btn_highscore_rechts.config(bg=screen_colour)
     highscore_kategorie_frame.config(bg=screen_colour)
-    scrollable_frame.config(bg=screen_colour)
+    highscore_list_frame.config(bg=screen_colour)
     canvas_hs.config(bg=screen_colour)
     scrollbar.config(bg=screen_colour, troughcolor=screen_colour, activebackground=screen_colour)
     canvas_hs.config(bg=screen_colour)

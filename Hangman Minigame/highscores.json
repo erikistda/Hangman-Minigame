@@ -1,58 +1,32 @@
 {
     "L\u00e4nder": [
         {
-            "name": "test10",
-            "time_ms": 1854,
-            "score": 43137
-        },
-        {
-            "name": "test13",
-            "time_ms": 4813,
-            "score": 16158,
-            "word": "GUATEMALA",
+            "name": "benj",
+            "time_ms": 2867,
+            "score": 27125,
+            "word": "RUSSLAND",
             "hearts_left": 4
         },
         {
-            "name": "test12",
-            "time_ms": 6276,
-            "score": 8850,
-            "word": "NEPAL",
-            "hearts_left": 2
-        },
-        {
-            "name": "test9",
-            "time_ms": 8196,
-            "score": 8133
-        },
-        {
-            "name": "test11",
-            "time_ms": 13957,
-            "score": 4408,
-            "word": "JORDANIEN",
-            "hearts_left": 1
-        },
-        {
-            "name": "test12",
-            "time_ms": 80791,
-            "score": 1237,
-            "word": "UKRAINE",
+            "name": "BENJ",
+            "time_ms": 5151,
+            "score": 19412,
+            "word": "LITAUEN",
             "hearts_left": 6
         },
         {
-            "name": "USA",
-            "time_ms": 2214
-        },
-        {
-            "name": "test6",
-            "time_ms": 5694
-        },
-        {
-            "name": "Benjamin",
-            "time_ms": 6544
-        },
-        {
             "name": "Benj",
-            "time_ms": 9426
+            "time_ms": 4484,
+            "score": 14865,
+            "word": "GEORGIEN",
+            "hearts_left": 3
+        },
+        {
+            "name": "benjs",
+            "time_ms": 5418,
+            "score": 14353,
+            "word": "NORDKOREA",
+            "hearts_left": 4
         }
     ],
     "Hauptst\u00e4dte": [
@@ -64,8 +38,23 @@
     "Tiere": [],
     "Informatik": [],
     "Elemente": [],
-    "Dinosaurier": [],
+    "Dinosaurier": [
+        {
+            "name": "Tharu de Profi",
+            "time_ms": 13656,
+            "score": 5632,
+            "word": "VELOCIRAPTOR",
+            "hearts_left": 3
+        }
+    ],
     "Games": [
+        {
+            "name": "Benj",
+            "time_ms": 3546,
+            "score": 21929,
+            "word": "MARIO KART",
+            "hearts_left": 4
+        },
         {
             "name": "Nik",
             "time_ms": 8822,
@@ -74,18 +63,45 @@
             "hearts_left": 6
         },
         {
-            "name": "tes112",
-            "time_ms": 22792,
-            "score": 3133,
-            "word": "LEAGUE OF LEGENDS",
-            "hearts_left": 2
+            "name": "Benj",
+            "time_ms": 8194,
+            "score": 9984,
+            "word": "THE LAST OF US",
+            "hearts_left": 4
         },
         {
-            "name": "Alle 3",
-            "time_ms": 92827,
-            "score": 807,
-            "word": "HOGWARTS LEGACY",
+            "name": "Benj",
+            "time_ms": 19405,
+            "score": 3567,
+            "word": "GHOST OF YOTEI",
             "hearts_left": 2
+        }
+    ],
+    "Filme": [
+        {
+            "name": "Aisha",
+            "time_ms": 28172,
+            "score": 2839,
+            "word": "SLEEPING BEAUTY",
+            "hearts_left": 3
+        }
+    ],
+    "Musik": [
+        {
+            "name": "Tharu",
+            "time_ms": 64723,
+            "score": 1030,
+            "word": "BAD GUY",
+            "hearts_left": 3
+        }
+    ],
+    "Superhelden": [
+        {
+            "name": "Tharu",
+            "time_ms": 16004,
+            "score": 3124,
+            "word": "BATMAN",
+            "hearts_left": 1
         }
     ]
 }

@@ -400,7 +400,7 @@ def check_letter(key):
 
 # --Fügt den neuen Score zur globalen Liste hinzu und speichert sie.--
 def save_score(name, time_ms, category):
-    global highscores, last_score
+    global highscores, last_score, geheime_wort, leben
     
     if category not in highscores:
         highscores[category] = []
@@ -408,7 +408,9 @@ def save_score(name, time_ms, category):
     highscores[category].append({
         "name": name,
         "time_ms": time_ms,
-        "score": last_score
+        "score": last_score,
+        "word": geheime_wort,
+        "hearts_left": leben
     })
     
     # Sortiere nach Score (höher ist besser)
@@ -417,6 +419,7 @@ def save_score(name, time_ms, category):
     
     save_highscores(highscores)
     update_highscores_display()
+
 
 
 def show_name_input_popup():
@@ -948,89 +951,93 @@ def delete_single_highscore(category, index):
         update_highscores_display()
 
 def update_highscores_display():
-    # -Highscore-Liste mit Abstand zwischen den Zeilen und 🗑️ rechts.-
-    for widget in scrollable_frame.winfo_children():
+    global highscores, kategorie_index
+
+    # Kategorie-Label aktualisieren
+    try:
+        highscore_kategorie_label.config(text=f"Kategorie: {kategorien[kategorie_index]}")
+    except Exception:
+        pass
+
+    for widget in highscore_list_frame.winfo_children():
         widget.destroy()
 
-    current_category = kategorien[kategorie_index]
-    highscore_kategorie_label.config(text=f"Kategorie: {current_category}")
-    scores = highscores.get(current_category, [])
+    category = kategorien[kategorie_index]
+    scores = highscores.get(category, [])
 
-    # -Header-
-    header = tk.Frame(scrollable_frame, bg=screen_colour)
-    header.pack(fill="x", padx=40, pady=(0, 5))
-    tk.Label(header, text="Platz", font=("Courier", font_size2, "bold"),
-         bg=screen_colour, anchor="w", width=6).grid(row=0, column=0, sticky="w")
-    tk.Label(header, text="Name", font=("Courier", font_size2, "bold"),
-             bg=screen_colour, anchor="w", width=24).grid(row=0, column=1, sticky="w")
-    tk.Label(header, text="Zeit (mm:ss:ms)", font=("Courier", font_size2, "bold"),
-             bg=screen_colour, anchor="w", width=18).grid(row=0, column=2, sticky="w", padx=(40, 0))
-    tk.Label(header, text="Score", font=("Courier", font_size2, "bold"),
-             bg=screen_colour, anchor="w", width=10).grid(row=0, column=3, sticky="w", padx=(20, 0))
-    tk.Label(header, text="", bg=screen_colour, width=3).grid(row=0, column=4)
+    # Hauptcontainer für Tabelle
+    table = tk.Frame(highscore_list_frame, bg=screen_colour)
+    table.pack(fill="x", padx=60, pady=(5, 0))
 
+    # Spaltenkonfiguration
+    table.grid_columnconfigure(0, minsize=50)   # Platz
+    table.grid_columnconfigure(1, minsize=180)  # Name
+    table.grid_columnconfigure(2, minsize=150)  # Zeit
+    table.grid_columnconfigure(3, minsize=100)  # Score
+    table.grid_columnconfigure(4, minsize=90)   # Herzen
+    table.grid_columnconfigure(5, minsize=200)  # Wort
+    table.grid_columnconfigure(6, minsize=60)   # Delete
 
+    # ----- Header -----
+    headers = ["Platz", "Name", "Zeit (mm:ss:ms)", "Score", "❤", "Wort", ""]
+    aligns = ["w", "w", "e", "e", "center", "w", "e"]
 
-    for i, score in enumerate(scores):
-        # -Abwechselnde Zeilenfarben-
-        bg_color = "#ffffff" if i % 2 == 0 else "#f2f0ef"
+    for col, (title, align) in enumerate(zip(headers, aligns)):
+        tk.Label(
+            table,
+            text=title,
+            font=("Courier", font_size2, "bold"),
+            bg=screen_colour,
+            anchor=align
+        ).grid(row=0, column=col, sticky="ew", padx=(2, 6), pady=(0, 4))
 
-        # -Äußerer Rahmen in Hintergrundfarbe-
-        outer_frame = tk.Frame(scrollable_frame, bg=screen_colour)
-        outer_frame.pack(fill="x", padx=40, pady=(2, 3))  
+    # ----- Datenzeilen -----
+    for i, entry in enumerate(scores):
+        bg_color = "#ffffff" if i % 2 == 0 else "#f1ebe9"
 
-        # -Innerer Frame = eigentliche Zeile-
-        row = tk.Frame(outer_frame, bg=bg_color)
-        row.pack(fill="x", padx=0, pady=0, ipadx=0, ipady=0)
+        # Platz
+        tk.Label(table, text=f"{i+1}.", font=("Courier", font_size1),
+                 bg=bg_color, anchor="w").grid(row=i+1, column=0, sticky="w", padx=(2, 6), pady=4)
 
-        # -Zeit berechnen-
-        time_ms = score.get("time_ms", 0)
-        total_seconds = time_ms / 1000
-        minutes = int(total_seconds // 60)
-        seconds = int(total_seconds % 60)
-        milliseconds = int(time_ms % 1000)
-        time_str = f"{minutes:02d}:{seconds:02d}:{milliseconds:03d}"
+        # Name
+        tk.Label(table, text=entry.get("name", ""), font=("Courier", font_size1),
+                 bg=bg_color, anchor="w").grid(row=i+1, column=1, sticky="w", padx=(2, 6))
 
-        # -Spaltenlayout-
-        row.grid_columnconfigure(0, weight=0)
-        row.grid_columnconfigure(1, weight=1)
-        row.grid_columnconfigure(2, weight=0)
-        row.grid_columnconfigure(3, weight=0)
+        # Zeit formatieren
+        time_ms = entry.get("time_ms", 0)
+        minutes = int(time_ms / 60000)
+        seconds = int((time_ms % 60000) / 1000)
+        millis = int(time_ms % 1000)
+        time_str = f"{minutes:02}:{seconds:02}:{millis:03}"
+        tk.Label(table, text=time_str, font=("Courier", font_size1),
+                 bg=bg_color, anchor="e").grid(row=i+1, column=2, sticky="e", padx=(2, 6))
 
-        # -Platz-
-        tk.Label(row, text=f"{i+1}.", font=("Courier", font_size1),
-                 bg=bg_color, width=5, anchor="w").grid(row=0, column=0, sticky="w", padx=(10, 10), pady=6)
+        # Score
+        tk.Label(table, text=str(entry.get("score", 0)), font=("Courier", font_size1),
+                 bg=bg_color, anchor="e").grid(row=i+1, column=3, sticky="e", padx=(2, 6))
 
-        # -Name-
-        tk.Label(row, text=score.get("name", ""), font=("Courier", font_size1),
-                 bg=bg_color, anchor="w").grid(row=0, column=1, sticky="we", pady=6)
+        # Herzen (Symbole)
+        hearts = entry.get("hearts_left", 0)
+        hearts_str = "❤️" * hearts if hearts > 0 else "—"
+        tk.Label(table, text=hearts_str, font=("Courier", font_size1),
+                 bg=bg_color, anchor="center").grid(row=i+1, column=4, sticky="nsew", padx=(2, 6))
 
-        # -Zeit-
-        tk.Label(row, text=time_str, font=("Courier", font_size1),
-                 bg=bg_color, width=18, anchor="e").grid(row=0, column=2, sticky="e", padx=(50, 5), pady=6)
+        # Wort
+        tk.Label(table, text=entry.get("word", ""), font=("Courier", font_size1),
+                 bg=bg_color, anchor="w").grid(row=i+1, column=5, sticky="w", padx=(2, 6))
 
-        # -🗑️ Lösch-Button-
-        delete_btn = tk.Button(
-            row,
-            text="🗑️",
-            font=("Segoe UI Emoji", font_size1 + 2),
-            bg="#ff6666",
-            fg="white",
-            relief="raised",
-            width=2,
-            height=1,
-            pady=-1,
-            command=lambda idx=i, cat=current_category: delete_single_highscore(cat, idx)
-        )
-        # -Score-
-        tk.Label(row, text=str(score.get("score", 0)), font=("Courier", font_size1),
-                 bg=bg_color, width=10, anchor="e").grid(row=0, column=3, sticky="e", padx=(20, 10), pady=6)
+        # Lösch-Button
+        delete_btn = tk.Button(table, text="🗑️", font=("Arial", font_size1),
+                               bg="#ff6666", fg="white", relief="flat",
+                               command=lambda idx=i:  delete_single_highscore(category, idx))
+        delete_btn.grid(row=i+1, column=6, sticky="e", padx=(2, 6), pady=2)
 
-        # -🗑️ Lösch-Button- (jetzt Spalte 4)
-        delete_btn.grid(row=0, column=4, sticky="e", padx=(8, 12), pady=4)
+    # Gleichmäßige Spaltenausdehnung
+    for c in range(7):
+        table.grid_columnconfigure(c, weight=1)
 
+    highscore_list_frame.update_idletasks()
 
-    canvas_hs.update_idletasks()
 
 # -- Kategorie-Wechsel im Highscore-Screen --
 
